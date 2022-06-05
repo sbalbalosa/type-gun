@@ -1,6 +1,6 @@
 import "./style.css";
-import "reflect-metadata";
-import "./decorators/root";
+import "./init";
+import "../src/examples/run-example";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 

@@ -1,4 +1,4 @@
-const getGlobal = function () {
+export const getGlobal = function () {
   if (typeof self !== "undefined") {
     return self;
   }
@@ -11,4 +11,7 @@ const getGlobal = function () {
   throw new Error("unable to locate global object");
 };
 
-export default getGlobal;
+export const getGun = function () {
+  const global = getGlobal();
+  return global.typeGunInstance;
+};

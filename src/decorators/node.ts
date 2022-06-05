@@ -1,11 +1,9 @@
-import { IGunInstance } from "gun";
-
 import setupMethods from "./setupMethods";
 
-export default function root(gunInstance: IGunInstance<any>) {
+export default function node(parentFn: () => { getNode: Function }) {
   return function (constructor: Function) {
     constructor.getParent = function () {
-      return gunInstance.get("root");
+      return parentFn().getNode();
     };
     setupMethods(constructor);
   };
