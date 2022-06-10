@@ -6,7 +6,7 @@ const setupStaticMethods = function (constructor: Function) {
     return constructor.name.toLowerCase();
   };
   constructor.getNode = function () {
-    return constructor.getParent().get(constructor.getName());
+    return constructor.getParentNode().get(constructor.getName());
   };
   constructor.fetch = async function (
     edgesToFetchFn: () => { getName: string }[] = () => []
@@ -26,7 +26,9 @@ const setupStaticMethods = function (constructor: Function) {
     edgesToFetchFn().forEach((edge) => {
       const edgeName = edge.getName();
       const edgeConstructor = edgeLookup[edgeName];
-      if (edgeLookup) {
+      const hasRelationship =
+        edgeConstructor.getParentPath() === constructor.getPath();
+      if (edgeConstructor && hasRelationship) {
         edgePromises.push(
           edgeConstructor.fetch().then((edgeInstance) => ({
             key: edgeName,
