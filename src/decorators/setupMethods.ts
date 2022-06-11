@@ -1,5 +1,5 @@
 import field, { fieldMetadataKey } from "./field";
-import edge, { edgeMetadataKey } from "./edge";
+import edge, { edgeMetadataKey, setupEdges } from "./edge";
 
 const setupStaticMethods = function (constructor: Function) {
   constructor.getName = function () {
@@ -9,7 +9,7 @@ const setupStaticMethods = function (constructor: Function) {
     return constructor.getParentNode().get(constructor.getName());
   };
   constructor.fetch = async function (
-    edgesToFetchFn: () => { getName: string }[] = () => []
+    edgesToFetchFn: Parameters<typeof setupEdges>[1]
   ) {
     const node = await constructor.getNode().then();
 
@@ -21,30 +21,7 @@ const setupStaticMethods = function (constructor: Function) {
       instance[field] = node[field];
     });
 
-    const edgePromises = [];
-    const edgeLookup = Reflect.getMetadata(edgeMetadataKey, constructor);
-    edgesToFetchFn().forEach((edge) => {
-      const edgeName = edge.getName();
-      const edgeConstructor = edgeLookup[edgeName];
-      const hasRelationship =
-        edgeConstructor.getParentPath() === constructor.getPath();
-      if (edgeConstructor && hasRelationship) {
-        edgePromises.push(
-          edgeConstructor.fetch().then((edgeInstance) => ({
-            key: edgeName,
-            instance: edgeInstance,
-          }))
-        );
-      }
-    });
-
-    await Promise.all(edgePromises).then((edgeResults) => {
-      edgeResults.forEach((edgeResult) => {
-        instance[edgeResult.key] = edgeResult.instance;
-      });
-    });
-
-    return instance;
+    return await setupEdges(constructor, instance, edgesToFetchFn);
   };
 };
 
