@@ -47,11 +47,29 @@ export default function set(
       const instance = createFieldInstance(constructor, node);
       instance.shell = node;
       return instance;
-    }
+    };
 
     constructor.fetchAll = async function () {
-
       const setNode = await constructor.getNode().then();
+      let { _, ...rest } = setNode;
+      let counter = Object.keys(rest).length - 1;
+      const instances = [];
+      const fetchPromise = new Promise((resolve) => {
+        constructor
+          .getNode()
+          .map()
+          .once((node, key) => {
+            if (rest[key] && node) {
+              const instance = createFieldInstance(constructor, node);
+              instance.shell = node;
+              instances.push(instance);
+              counter--;
+              if (counter === 0) resolve(instances);
+            }
+          });
+      });
+
+      return await fetchPromise;
 
       // find all keys of setNode
 
@@ -61,19 +79,19 @@ export default function set(
 
       //   }))
       // })
+    };
 
-    }
+    constructor.prototype.shell = {};
 
-    constructor.prototype.shell = Gun.node.ify({});
-
-    constructor.prototype.save = function () {
+    constructor.prototype.save = async function () {
       // const encryptedFields = this.getEncryptedFields();
       const node = createFieldRawData(this, constructor);
-
-      return constructor.getNode().set({
+      const data = {
         ...constructor.prototype.shell,
-        ...node
-      });
+        ...node,
+      };
+
+      this["shell"] = await constructor.getNode().set(data).then();
     };
 
     constructor.prototype.remove = function () {
