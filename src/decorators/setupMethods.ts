@@ -1,4 +1,8 @@
-import field, { fieldMetadataKey } from "./field";
+import field, {
+  fieldMetadataKey,
+  createFieldInstance,
+  createFieldRawData,
+} from "./field";
 import edge, { edgeMetadataKey, setupEdges } from "./edge";
 
 const setupStaticMethods = function (constructor: Function) {
@@ -12,15 +16,8 @@ const setupStaticMethods = function (constructor: Function) {
     edgesToFetchFn: Parameters<typeof setupEdges>[1]
   ) {
     const node = await constructor.getNode().then();
-
     if (!node) return null;
-
-    const fields = Reflect.getMetadata(fieldMetadataKey, constructor);
-    const instance = new constructor();
-    fields.forEach((field) => {
-      instance[field] = node[field];
-    });
-
+    const instance = createFieldInstance(constructor, node);
     return await setupEdges(constructor, instance, edgesToFetchFn);
   };
 };
@@ -28,11 +25,7 @@ const setupStaticMethods = function (constructor: Function) {
 const setupInstanceMethods = function (constructor: Function) {
   constructor.prototype.save = function () {
     // const encryptedFields = this.getEncryptedFields();
-    const fields = Reflect.getMetadata(fieldMetadataKey, constructor);
-    const node = fields.reduce((acc, field) => {
-      acc[field] = this[field];
-      return acc;
-    }, {});
+    const node = createFieldRawData(this, constructor);
     return constructor.getNode().put(node);
   };
   constructor.prototype.remove = function () {
