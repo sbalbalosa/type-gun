@@ -33,15 +33,15 @@ post2.title = "title2";
 await post2.save();
 
 const posts = await Post.fetchAll();
-console.log(posts);
+// console.log(posts);
 
-post1.content = "updated-content";
-post1.title = "updated-title";
+post1.content = "updated-content1";
+post1.title = "updated-title1";
 await post1.save();
 
-post2.content = "updated-content1";
-post2.title = "updated-title1";
+post2.content = "updated-content2";
+post2.title = "updated-title2";
 await post2.save();
 
 const test = await Post.fetchAll();
-console.log(test);
+// console.log(test);

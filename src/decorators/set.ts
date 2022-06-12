@@ -87,7 +87,7 @@ export default function set(
       // const encryptedFields = this.getEncryptedFields();
       const node = createFieldRawData(this, constructor);
       const data = {
-        ...constructor.prototype.shell,
+        ...this["shell"],
         ...node,
       };
 
@@ -95,7 +95,7 @@ export default function set(
     };
 
     constructor.prototype.remove = function () {
-      return constructor.getNode().unset(constructor.prototype.shell);
+      return constructor.getNode().unset(this["shell"]);
     };
   };
 }
