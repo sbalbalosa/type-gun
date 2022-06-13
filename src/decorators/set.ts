@@ -19,6 +19,17 @@ const posts = await Post.saveAll(posts);
 REMOVING
 await Post.removeById("1uhbygbnuhgbn");
 await Post.remove(post);
+
+RELATIONSHIP
+const post = await Post.fetchById('iasdasfas', () => [Author]);
+console.log(post.author);
+const collection = await Post.fetchAll(() => [Author]); 
+
+@set
+class Post {}
+
+@node(() => Post)
+class Author {}
 */
 
 export default function set(
@@ -55,6 +66,7 @@ export default function set(
       let counter = Object.keys(rest).length - 1;
       const instances = [];
       const fetchPromise = new Promise((resolve) => {
+        // QUESTION: Is there a way to not include null in the query?
         constructor
           .getNode()
           .map()
@@ -63,22 +75,12 @@ export default function set(
               const instance = createFieldInstance(constructor, node);
               instance.gunId = node["_"]?.["#"];
               instances.push(instance);
-              counter--;
-              if (counter === 0) resolve(instances);
             }
+            counter--;
+            if (counter === 0) resolve(instances);
           });
       });
-
       return await fetchPromise;
-
-      // find all keys of setNode
-
-      // const fetchPromise = new Promise((resolve, reject) => {
-
-      //   constructor.getNode().map().once((nodes: any) => {
-
-      //   }))
-      // })
     };
 
     constructor.prototype.gunId = null;
@@ -89,6 +91,9 @@ export default function set(
       const node = createFieldRawData(this, constructor);
       if (this.gunId) {
         gunNode = await constructor.getNode().get(this.gunId).then();
+        for (let key in node) {
+          gunNode[key] = node[key];
+        }
         await constructor.getNode().get(this.gunId).put(gunNode).then();
       } else {
         this.gunId = (await constructor.getNode().set(node).then())?.["_"]?.[
@@ -99,8 +104,10 @@ export default function set(
 
     constructor.prototype.remove = async function () {
       if (this.gunId) {
+        // QUESTION: Why is unset not working in this context
+        await constructor.getNode().get(this.gunId).put(null).then();
         const gunNode = await constructor.getNode().get(this.gunId).then();
-        await constructor.getNode().unset(gunNode);
+        if (gunNode === null) this.gunNode = null;
       }
     };
   };

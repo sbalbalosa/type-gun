@@ -50,3 +50,10 @@ await post2.save();
 const test = await Post.fetchAll();
 
 console.log(test);
+
+await post1.remove();
+await post2.remove();
+
+const test2 = await Post.fetchAll();
+
+console.log(test2);
