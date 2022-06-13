@@ -1,4 +1,4 @@
-import Gun from "gun";
+import Gun from "cgun";
 import { createFieldInstance, createFieldRawData } from "./field";
 import setupMethods from "./setupMethods";
 
@@ -45,7 +45,7 @@ export default function set(
       const node = await constructor.getNode().get(id).then();
       if (!node) return null;
       const instance = createFieldInstance(constructor, node);
-      instance.shell = node;
+      instance.gunId = node?.["_"]?.["#"];
       return instance;
     };
 
@@ -61,7 +61,7 @@ export default function set(
           .once((node, key) => {
             if (rest[key] && node) {
               const instance = createFieldInstance(constructor, node);
-              instance.shell = node;
+              instance.gunId = node["_"]?.["#"];
               instances.push(instance);
               counter--;
               if (counter === 0) resolve(instances);
@@ -81,21 +81,27 @@ export default function set(
       // })
     };
 
-    constructor.prototype.shell = {};
+    constructor.prototype.gunId = null;
 
     constructor.prototype.save = async function () {
       // const encryptedFields = this.getEncryptedFields();
+      let gunNode = {};
       const node = createFieldRawData(this, constructor);
-      const data = {
-        ...this["shell"],
-        ...node,
-      };
-
-      this["shell"] = await constructor.getNode().set(data).then();
+      if (this.gunId) {
+        gunNode = await constructor.getNode().get(this.gunId).then();
+        await constructor.getNode().get(this.gunId).put(gunNode).then();
+      } else {
+        this.gunId = (await constructor.getNode().set(node).then())?.["_"]?.[
+          "#"
+        ];
+      }
     };
 
-    constructor.prototype.remove = function () {
-      return constructor.getNode().unset(this["shell"]);
+    constructor.prototype.remove = async function () {
+      if (this.gunId) {
+        const gunNode = await constructor.getNode().get(this.gunId).then();
+        await constructor.getNode().unset(gunNode);
+      }
     };
   };
 }
