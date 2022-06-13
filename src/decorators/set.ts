@@ -1,5 +1,6 @@
 import Gun from "cgun";
 import { createFieldInstance, createFieldRawData } from "./field";
+import edge, { edgeMetadataKey, setupEdges } from "./edge";
 import setupMethods from "./setupMethods";
 
 /*
@@ -52,15 +53,20 @@ export default function set(
       return constructor.getParentNode().get(constructor.getName());
     };
 
-    constructor.fetchById = async function (id: string) {
+    constructor.fetchById = async function (
+      id: string,
+      edgesToFetchFn: Parameters<typeof setupEdges>[1]
+    ) {
       const node = await constructor.getNode().get(id).then();
       if (!node) return null;
       const instance = createFieldInstance(constructor, node);
       instance.gunId = node?.["_"]?.["#"];
-      return instance;
+      return await setupEdges(constructor, instance, edgesToFetchFn);
     };
 
-    constructor.fetchAll = async function () {
+    constructor.fetchAll = async function (
+      edgesToFetchFn: Parameters<typeof setupEdges>[1]
+    ) {
       const setNode = await constructor.getNode().then();
       let { _, ...rest } = setNode;
       let counter = Object.keys(rest).length - 1;
@@ -70,11 +76,13 @@ export default function set(
         constructor
           .getNode()
           .map()
-          .once((node, key) => {
+          .once(async (node, key) => {
             if (rest[key] && node) {
               const instance = createFieldInstance(constructor, node);
               instance.gunId = node["_"]?.["#"];
-              instances.push(instance);
+              instances.push(
+                await setupEdges(constructor, instance, edgesToFetchFn)
+              );
             }
             counter--;
             if (counter === 0) resolve(instances);

@@ -39,21 +39,21 @@ console.log("-------");
 const posts = await Post.fetchAll();
 console.log(posts);
 
-post1.content = "updated-content1";
-post1.title = "updated-title1";
-await post1.save();
+// post1.content = "updated-content1";
+// post1.title = "updated-title1";
+// await post1.save();
 
-post2.content = "updated-content2";
-post2.title = "updated-title2";
-await post2.save();
+// post2.content = "updated-content2";
+// post2.title = "updated-title2";
+// await post2.save();
 
-const test = await Post.fetchAll();
+// const test = await Post.fetchAll();
 
-console.log(test);
+// console.log(test);
 
-await post1.remove();
-await post2.remove();
+// await post1.remove();
+// await post2.remove();
 
-const test2 = await Post.fetchAll();
+// const test2 = await Post.fetchAll();
 
-console.log(test2);
+// console.log(test2);

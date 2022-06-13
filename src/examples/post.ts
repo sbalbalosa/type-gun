@@ -1,7 +1,7 @@
-import { field } from "../decorators";
+import { field, edge } from "../decorators";
 import set from "../decorators/set";
 
-import Profile from "./profile";
+import Author from "./author";
 
 @set(() => Profile)
 export default class Post {
@@ -10,4 +10,7 @@ export default class Post {
 
   @field
   content: string;
+
+  @edge
+  author: Author;
 }
