@@ -1,6 +1,7 @@
 import { field, edge } from "../decorators";
 import set from "../decorators/set";
 
+import Profile from "./profile";
 import Author from "./author";
 
 @set(() => Profile)
