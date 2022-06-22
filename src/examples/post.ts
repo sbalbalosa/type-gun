@@ -12,6 +12,6 @@ export default class Post {
   @field
   content: string;
 
-  @edge
+  @edge(() => Author)
   author: Author;
 }

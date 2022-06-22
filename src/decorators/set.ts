@@ -1,6 +1,6 @@
 import Gun from "cgun";
 import { createFieldInstance, createFieldRawData } from "./field";
-import edge, { edgeMetadataKey, setupEdges } from "./edge";
+import edge, { edgeMetadataKey } from "./edge";
 import setupMethods from "./setupMethods";
 
 /*
@@ -33,6 +33,22 @@ class Post {}
 class Author {}
 */
 
+export function setupEdges(
+  constructor: Function,
+  instance: any,
+) {
+  debugger;
+  const edgeLookup = Reflect.getMetadata(edgeMetadataKey, constructor);
+  if (!edgeLookup) return instance; 
+  Object.entries(edgeLookup).forEach(([key, edgeConstructor]) => {
+    if (edgeConstructor.getParentPath() === constructor.getPath()) {
+      instance[key] = edgeConstructor;
+    }
+  });
+
+  return instance;
+}
+
 export default function set(
   parentFn: () => { getNode: Function; getPath: () => string }
 ) {
@@ -52,21 +68,22 @@ export default function set(
     constructor.getNode = function () {
       return constructor.getParentNode().get(constructor.getName());
     };
+    
+    constructor.getPath = function () {
+      return `${constructor.getParentPath()}/${constructor.getName()}`;
+    };
 
-    constructor.fetchById = async function (
+    constructor.id = async function (
       id: string,
-      edgesToFetchFn: Parameters<typeof setupEdges>[1]
     ) {
       const node = await constructor.getNode().get(id).then();
       if (!node) return null;
       const instance = createFieldInstance(constructor, node);
       instance.gunId = node?.["_"]?.["#"];
-      return await setupEdges(constructor, instance, edgesToFetchFn);
+      return setupEdges(constructor, instance);
     };
 
-    constructor.fetchAll = async function (
-      edgesToFetchFn: Parameters<typeof setupEdges>[1]
-    ) {
+    constructor.all = async function () {
       const setNode = await constructor.getNode().then();
       let { _, ...rest } = setNode;
       let counter = Object.keys(rest).length - 1;
@@ -76,12 +93,12 @@ export default function set(
         constructor
           .getNode()
           .map()
-          .once(async (node, key) => {
+          .once((node, key) => {
             if (rest[key] && node) {
               const instance = createFieldInstance(constructor, node);
               instance.gunId = node["_"]?.["#"];
               instances.push(
-                await setupEdges(constructor, instance, edgesToFetchFn)
+                 setupEdges(constructor, instance)
               );
             }
             counter--;

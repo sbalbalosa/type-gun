@@ -12,13 +12,11 @@ const setupStaticMethods = function (constructor: Function) {
   constructor.getNode = function () {
     return constructor.getParentNode().get(constructor.getName());
   };
-  constructor.fetch = async function (
-    edgesToFetchFn: Parameters<typeof setupEdges>[1]
-  ) {
+  constructor.fetch = async function () {
     const node = await constructor.getNode().then();
     if (!node) return null;
     const instance = createFieldInstance(constructor, node);
-    return await setupEdges(constructor, instance, edgesToFetchFn);
+    return await setupEdges(constructor, instance);
   };
 };
 
@@ -31,6 +29,14 @@ const setupInstanceMethods = function (constructor: Function) {
   constructor.prototype.remove = function () {
     return constructor.getNode().put(null);
   };
+
+  // TODO: get data from gun and sync it with the instance
+  constructor.prototype.sync = async function () {
+    const node = await constructor.getNode().then();
+    if(!node) return;
+  };
+
+  // setupEdges(constructor, constructor.prototype);
 };
 
 const setupMethods = function (constructor: Function) {

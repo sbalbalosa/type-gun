@@ -1,31 +1,15 @@
 export const edgeMetadataKey = Symbol("edge");
 
-export async function setupEdges(
+export function setupEdges(
   constructor: Function,
   instance: any,
-  edgesToFetchFn: () => { getName: string }[] = () => []
 ) {
-  const edgePromises = [];
   const edgeLookup = Reflect.getMetadata(edgeMetadataKey, constructor);
-  edgesToFetchFn().forEach((edge) => {
-    const edgeName = edge.getName();
-    const edgeConstructor = edgeLookup[edgeName];
-    const hasRelationship =
-      edgeConstructor.getParentPath() === constructor.getPath();
-    if (edgeConstructor && hasRelationship) {
-      edgePromises.push(
-        edgeConstructor.fetch().then((edgeInstance) => ({
-          key: edgeName,
-          instance: edgeInstance,
-        }))
-      );
+  if (!edgeLookup) return instance; 
+  Object.entries(edgeLookup).forEach(([key, edgeConstructor]) => {
+    if (edgeConstructor.getParentPath() === constructor.getPath()) {
+      instance[key] = edgeConstructor;
     }
-  });
-
-  await Promise.all(edgePromises).then((edgeResults) => {
-    edgeResults.forEach((edgeResult) => {
-      instance[edgeResult.key] = edgeResult.instance;
-    });
   });
 
   return instance;

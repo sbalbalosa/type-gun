@@ -1,7 +1,7 @@
 import { getGun } from "../helpers";
 import { root, field, edge } from "../decorators";
 
-import Degree from "./degree";
+import Post from "./post";
 
 const gun = getGun();
 
@@ -15,6 +15,6 @@ export default class Profile {
 
   fullName: string = "";
 
-  @edge(() => Degree)
-  degree?: Degree;
+  @edge(() => Post)
+  post?: Post;
 }
