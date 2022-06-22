@@ -43,6 +43,10 @@
  * profile.subscribe((updated) => console.log(updated));
  * profile.firstName = 'test'; // triggers a save
  * 
+ * !ENCRYPTION and DECRYPTION
+ * 
+ * const profile = new Profile(gunInstance);
+ * 
  * 
  * ? field decorators
  * 
@@ -52,6 +56,7 @@
  * 
  * ? class decorators
  * 
+ * @user
  * @node
  * @set
  * 
