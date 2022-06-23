@@ -1,4 +1,4 @@
-// import './gun-experiments';
+import './gun-experiments';
 // import './create-user';
 
 import { getGun } from "../helpers";
@@ -9,26 +9,61 @@ import Authors from './authors';
 import Posts from './posts';
 
 const profile = Profile.create(getGun());
-profile.firstName = 'test';
-profile.lastName = 'test';
-await profile.save();
+// const degree = Degree.create(profile);
+// degree.title = 'BSIT';
+// await degree.save();
 
-const degree = Degree.create(profile);
-degree.title = 'test';
-await degree.save();
-
-const post = Posts.create(profile);
-post.title = 'this is a post';
-post.content = 'content';
-await post.save();
-
-const author = Authors.create(post);
-author.name = 'John';
+const posts = await profile.posts.fetchAll();
+const degree = await profile.degree.fetch();
+const author = Authors.create(degree);
+author.name = 'Black mamba!';
 await author.save();
 
-const degree2 = Degree.create(author);
-degree2.title = 'yup';
-await degree2.save();
+console.log(posts);
+console.log(degree);
+
+const posts1 = await degree.parentNode.posts.fetchAll();
+console.log(posts1);
+
+const author1 = (await (await profile.degree.fetch()).author.fetch());
+console.log(author1);
+
+// posts[1].title = 'This is updated!!';
+// await posts[1].save();
+
+// const posts1 = await profile.posts.fetchAll();
+// console.log(posts1);
+
+// const post = await profile.posts.fetchById('l4r0g5hbm6v8ptwtR39E');
+// post.title = "Amazing!!";
+// await post.save();
+// console.log(post);
+
+// const degree = Degree.create(profile);
+// degree.title = 'test';
+// await degree.save();
+
+// const post = Posts.create(profile);
+// post.title = 'this is a post';
+// post.content = 'content';
+// await post.save();
+
+// const post1 = Posts.create(profile);
+// post1.title = 'this is a post';
+// post1.content = 'content';
+// await post1.save();
+
+// const post2 = Posts.create(profile);
+// post2.title = 'this is a post';
+// post2.content = 'content';
+// await post2.save();
+// const author = Authors.create(post);
+// author.name = 'John';
+// await author.save();
+
+// const degree2 = Degree.create(author);
+// degree2.title = 'yup';
+// await degree2.save();
 
 
 

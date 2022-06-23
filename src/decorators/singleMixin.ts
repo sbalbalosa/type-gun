@@ -1,8 +1,10 @@
 import { createFieldRawData, hydrateInstance } from "./field";
 
 export default function singleMixin(constructor) {
+  constructor.isSet = false;
   constructor.prototype.gunId = null;
   constructor.prototype.parentNode = null;
+  
 
   // TODO: add as a setter
   constructor.prototype.gunInstance = function() {
@@ -39,7 +41,8 @@ export default function singleMixin(constructor) {
 
   constructor.prototype.sync = async function() {
     if (this.gunInstance()) {
-      const result = await this.gunInstance().once().then();
+      const result = await this.gunInstance().then();
+      if (result === null) throw new Error('Cannot sync deleted node');
       return hydrateInstance(this, result);
     }
     throw new Error('No gun instance');

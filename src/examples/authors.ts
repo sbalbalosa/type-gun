@@ -1,7 +1,6 @@
-import { field } from "../decorators";
-import set from "../decorators/set";
+import { field, node } from "../decorators";
 
-@set
+@node
 export default class Author {
   @field
   name?: string;

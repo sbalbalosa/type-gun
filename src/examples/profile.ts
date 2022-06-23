@@ -1,4 +1,6 @@
-import { root, field } from "../decorators";
+import { root, field, edge } from "../decorators";
+import Posts from "./posts";
+import Degree from './degree';
 
 @root
 export default class Profile {
@@ -9,4 +11,10 @@ export default class Profile {
   lastName: string = "test1";
 
   fullName: string = "";
+
+  @edge(() => Posts)
+  posts?: null; 
+
+  @edge(() => Degree)
+  degree?: null;
 }

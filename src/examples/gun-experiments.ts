@@ -17,3 +17,6 @@ import { getGun } from "../helpers";
 //     console.log(data);
 // });
 
+// const metadata = await getGun().get('root').get('profile').get('posts').then();
+// getGun().get('root').get('profile').get('posts').once().map().once((data, key) => {
+// });

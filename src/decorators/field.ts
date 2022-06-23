@@ -22,9 +22,9 @@ export function createFieldRawData(instance: any, constructor: any) {
 }
 
 
-export function createFieldInstance(constructor: any, node: any) {
+export function createFieldInstance(constructor: any, result: any) {
   const instance = new constructor();
-  return hydrateInstance(instance, node);
+  return hydrateInstance(instance, result);
 }
 
 export default function field(target: any, propertyKey: string) {

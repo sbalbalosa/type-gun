@@ -1,5 +1,6 @@
 import { IGunInstance } from "gun";
 import singleMixin from "./singleMixin";
+import { setupEdges } from "./edge";
 
 export default function root(constructor: Function) {
   singleMixin(constructor);
@@ -11,6 +12,6 @@ export default function root(constructor: Function) {
       gunInstance: () => gunInstance.get(name),
       gunPath: () =>  name
     };
-    return instance;
+    return setupEdges(instance);
   }
 };

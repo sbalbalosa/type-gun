@@ -15,3 +15,8 @@ export const getGun = function () {
   const global = getGlobal();
   return global.typeGunInstance;
 };
+
+export const removeProperty = (obj, id) => {
+  const { [id]: _, ...rest } = obj;
+  return rest;
+}
