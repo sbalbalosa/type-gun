@@ -1,21 +1,12 @@
-import setupMethods from "./setupMethods";
+import singleMixin from "./singleMixin";
 
-export default function node(
-  parentFn: () => { getNode: Function; getPath: () => string }
-) {
-  return function (constructor: Function) {
-    constructor.getParentNode = function () {
-      return parentFn().getNode();
-    };
+export default function node(constructor: Function) {
+  singleMixin(constructor);
 
-    constructor.getParentPath = function () {
-      return parentFn().getPath();
-    };
-
-    setupMethods(constructor);
-
-    constructor.getPath = function () {
-      return `${constructor.getParentPath()}/${constructor.getName()}`;
-    };
-  };
-}
+  constructor.create = function(node) {
+    const instance = new constructor();
+    instance.parentNode = node;
+    instance.gunId = constructor.name.toLowerCase();
+    return instance;
+  }
+};

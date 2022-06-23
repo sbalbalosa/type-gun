@@ -1,24 +1,36 @@
 // import './gun-experiments';
 // import './create-user';
-import Profile from "./profile";
-import Post from './post';
 
-const profile = new Profile();
+import { getGun } from "../helpers";
+
+import Profile from "./profile";
+import Degree from './degree';
+import Authors from './authors';
+import Posts from './posts';
+
+const profile = Profile.create(getGun());
 profile.firstName = 'test';
 profile.lastName = 'test';
-profile.save();
+await profile.save();
 
-const post = new Post();
-post.content = 'test';
-post.title = 'title';
-post.save();
+const degree = Degree.create(profile);
+degree.title = 'test';
+await degree.save();
 
-const testProfile = await Profile.fetch();
-const testPost = await testProfile.post.id('l4h1ofp201aEWdwrlxHSJdZ');
-const author = await testPost.author.fetch();
+const post = Posts.create(profile);
+post.title = 'this is a post';
+post.content = 'content';
+await post.save();
 
-console.log(testPost);
-console.log(author);
+const author = Authors.create(post);
+author.name = 'John';
+await author.save();
+
+const degree2 = Degree.create(author);
+degree2.title = 'yup';
+await degree2.save();
+
+
 
 
 // import Degree from "./degree";

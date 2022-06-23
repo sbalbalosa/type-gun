@@ -5,17 +5,17 @@
  * 
  * !SAVING update gun store
  * 
- * const profile = new Profile(gunInstance);
+ * const profile = Profile.create(gunInstance);
  * profile.firstName = 'John';
  * profile.lastName = 'Doe';
  * profile.save();
  * 
- * const post = new Post(profile);
+ * const post = Post.create(profile);
  * post.content = 'test';
  * post.title = 'title';
  * post.save();
  * 
- * const like = new Like(post);
+ * const like = Like.create(post); // post should be saved first
  * like.count = 5;
  * like.save();
  * 

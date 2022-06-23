@@ -1,24 +1,16 @@
 import { IGunInstance } from "gun";
+import singleMixin from "./singleMixin";
 
-import setupMethods from "./setupMethods";
+export default function root(constructor: Function) {
+  singleMixin(constructor);
 
-export default function root(
-  gunInstance: IGunInstance<any>,
-  name: string = "root"
-) {
-  return function (constructor: Function) {
-    constructor.getParentNode = function () {
-      return gunInstance.get(name);
+  constructor.create = function(gunInstance: IGunInstance<any>, name = 'root') {
+    const instance = new constructor();
+    instance.gunId = constructor.name.toLowerCase();
+    instance.parentNode = {
+      gunInstance: () => gunInstance.get(name),
+      gunPath: () =>  name
     };
-
-    constructor.getParentPath = function () {
-      return name;
-    };
-
-    setupMethods(constructor);
-
-    constructor.getPath = function () {
-      return `${name}/${constructor.getName()}`;
-    };
-  };
-}
+    return instance;
+  }
+};

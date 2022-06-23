@@ -1,139 +1,54 @@
-import Gun from "cgun";
-import { createFieldInstance, createFieldRawData } from "./field";
-import edge, { edgeMetadataKey } from "./edge";
-import setupMethods from "./setupMethods";
+import singleMixin from "./singleMixin";
+import { createFieldRawData } from "./field";
 
-/*
-FETCHING
-const post = await Post.fetchById('iasdasfas');
-const collection = await Post.fetchAll(); // returns a collection of posts
+export default function set(constructor: Function) {
+  singleMixin(constructor);
 
-SAVING
-const post = new Post();
-post.title = "Hello World";
-post.content = 'test';
-await post.save();
+  constructor.create = function(node) {
+    const instance = new constructor();
+    instance.parentNode = node;
+    instance.gunId = null;
+    instance.setId = constructor.name.toLowerCase();
+    return instance;
+  }
 
-BATCH SAVING
-const posts = await Post.saveAll(posts);
+  constructor.prototype.setId = null;
 
-REMOVING
-await Post.removeById("1uhbygbnuhgbn");
-await Post.remove(post);
-
-RELATIONSHIP
-const post = await Post.fetchById('iasdasfas', () => [Author]);
-console.log(post.author);
-const collection = await Post.fetchAll(() => [Author]); 
-
-@set
-class Post {}
-
-@node(() => Post)
-class Author {}
-*/
-
-export function setupEdges(
-  constructor: Function,
-  instance: any,
-) {
-  debugger;
-  const edgeLookup = Reflect.getMetadata(edgeMetadataKey, constructor);
-  if (!edgeLookup) return instance; 
-  Object.entries(edgeLookup).forEach(([key, edgeConstructor]) => {
-    if (edgeConstructor.getParentPath() === constructor.getPath()) {
-      instance[key] = edgeConstructor;
+  // TODO: add as a setter
+  constructor.prototype.setInstance = function() {
+    if (this.parentNode && this.parentNode.gunInstance() && this.setId) {
+      return this.parentNode.gunInstance().get(this.setId);
     }
-  });
+    return null;
+  }
 
-  return instance;
-}
 
-export default function set(
-  parentFn: () => { getNode: Function; getPath: () => string }
-) {
-  return function (constructor: Function) {
-    constructor.getName = function () {
-      return constructor.name.toLowerCase();
-    };
-
-    constructor.getParentNode = function () {
-      return parentFn().getNode();
-    };
-
-    constructor.getParentPath = function () {
-      return parentFn().getPath();
-    };
-
-    constructor.getNode = function () {
-      return constructor.getParentNode().get(constructor.getName());
-    };
+  // TODO: add as a setter
+  constructor.prototype.gunInstance = function() {
+    if (this.setInstance() && this.gunId) {
+      return this.setInstance().get(this.gunId);
+    }
+    return null;
+  }
     
-    constructor.getPath = function () {
-      return `${constructor.getParentPath()}/${constructor.getName()}`;
-    };
+  // TODO: add as a setter
+  constructor.prototype.gunPath = function() {
+    if (this.parentNode && this.gunId && this.setId) {
+      return `${this.parentNode.gunPath()}/${this.setId}/${this.gunId}`;
+    }
+    return null;
+  }
 
-    constructor.id = async function (
-      id: string,
-    ) {
-      const node = await constructor.getNode().get(id).then();
-      if (!node) return null;
-      const instance = createFieldInstance(constructor, node);
-      instance.gunId = node?.["_"]?.["#"];
-      return setupEdges(constructor, instance);
-    };
-
-    constructor.all = async function () {
-      const setNode = await constructor.getNode().then();
-      let { _, ...rest } = setNode;
-      let counter = Object.keys(rest).length - 1;
-      const instances = [];
-      const fetchPromise = new Promise((resolve) => {
-        // QUESTION: Is there a way to not include null in the query?
-        constructor
-          .getNode()
-          .map()
-          .once((node, key) => {
-            if (rest[key] && node) {
-              const instance = createFieldInstance(constructor, node);
-              instance.gunId = node["_"]?.["#"];
-              instances.push(
-                 setupEdges(constructor, instance)
-              );
-            }
-            counter--;
-            if (counter === 0) resolve(instances);
-          });
-      });
-      return await fetchPromise;
-    };
-
-    constructor.prototype.gunId = null;
-
-    constructor.prototype.save = async function () {
-      // const encryptedFields = this.getEncryptedFields();
-      let gunNode = {};
-      const node = createFieldRawData(this, constructor);
-      if (this.gunId) {
-        gunNode = await constructor.getNode().get(this.gunId).then();
-        for (let key in node) {
-          gunNode[key] = node[key];
-        }
-        await constructor.getNode().get(this.gunId).put(gunNode).then();
-      } else {
-        this.gunId = (await constructor.getNode().set(node).then())?.["_"]?.[
-          "#"
-        ];
-      }
-    };
-
-    constructor.prototype.remove = async function () {
-      if (this.gunId) {
-        // QUESTION: Why is unset not working in this context
-        await constructor.getNode().get(this.gunId).put(null).then();
-        const gunNode = await constructor.getNode().get(this.gunId).then();
-        if (gunNode === null) this.gunNode = null;
-      }
-    };
-  };
-}
+  constructor.prototype.save = async function() {
+    const node = createFieldRawData(this, constructor);
+    if (this.gunId && this.gunInstance()) {
+      await this.gunInstance().put(node).then();
+      return this;
+    } else if (this.setInstance()) {
+      const result = await this.setInstance().set(node).then();
+      this.gunId = result?.['_']?.['#'];
+      return this;
+    }
+    throw new Error('No gun instance');
+  }
+};
