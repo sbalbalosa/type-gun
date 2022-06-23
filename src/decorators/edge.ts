@@ -1,7 +1,7 @@
 export const edgeMetadataKey = Symbol("edge");
 
-import MultipleQuery from  '../query/multiple-query';
-import SingleQuery from '../query/single-query';
+import MultipleQuery from  './query/multiple';
+import SingleQuery from './query/single';
 
 export default function edge(constructorFn: () => Function) {
   return function edge(target, propertyKey) {

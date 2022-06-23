@@ -1,4 +1,4 @@
-import singleMixin from "./singleMixin";
+import singleMixin from "./mixins/single";
 import { setupEdges } from "./edge";
 
 export default function node(constructor: Function) {

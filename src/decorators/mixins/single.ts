@@ -1,4 +1,4 @@
-import { createFieldRawData, hydrateInstance } from "./field";
+import { createFieldRawData, hydrateInstance } from "../field";
 
 export default function singleMixin(constructor) {
   constructor.isSet = false;

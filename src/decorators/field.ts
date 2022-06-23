@@ -12,7 +12,7 @@ export function hydrateInstance(instance, node) {
   return instance;
 }
 
-export function createFieldRawData(instance: any, constructor: any) {
+export function createFieldRawData(instance, constructor) {
   const fields = getFields(constructor);
   const node = fields.reduce((acc, field) => {
     acc[field] = instance[field];
@@ -22,12 +22,12 @@ export function createFieldRawData(instance: any, constructor: any) {
 }
 
 
-export function createFieldInstance(constructor: any, result: any) {
+export function createFieldInstance(constructor, result) {
   const instance = new constructor();
   return hydrateInstance(instance, result);
 }
 
-export default function field(target: any, propertyKey: string) {
+export default function field(target, propertyKey: string) {
   const constructor = target.constructor || target;
   const metadata = getFields(constructor);
   metadata.push(propertyKey);

@@ -1,5 +1,5 @@
-import { hydrateInstance } from "../decorators/field";
-import { removeProperty } from "../helpers";
+import { hydrateInstance } from "../field";
+import { removeProperty } from "../../helpers";
 export default class MultipleQuery {
     parent = null;
     target = null;

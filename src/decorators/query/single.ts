@@ -1,4 +1,4 @@
-import { hydrateInstance } from "../decorators/field";
+import { hydrateInstance } from "../field";
 export default class SingleQuery {
     parent = null;
     target = null;
