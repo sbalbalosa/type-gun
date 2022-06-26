@@ -1,8 +1,8 @@
-import { root, field, edge } from "../decorators";
+import { root, field, edge, node } from "../decorators";
 import Posts from "./posts";
 import Degree from './degree';
 
-@root
+@node
 export default class Profile {
   @field
   firstName: string = "test";

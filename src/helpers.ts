@@ -40,3 +40,14 @@ export function userAuth(userNode, username, password) {
   });
   return authPromise;
 }
+
+
+export function userChangePassword(userNode, username, password, newPassword) {
+  const authPromise = new Promise((resolve, reject) => {
+      userNode.auth(username, password, (ack) => {
+          if (ack.err) reject(new Error(ack.err));
+          resolve(true);
+      }, { change: newPassword });
+  });
+  return authPromise;
+}

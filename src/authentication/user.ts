@@ -1,26 +1,30 @@
-import { getGun, userCreate, userAuth } from "../helpers";
+import { getGun, userCreate, userAuth, userChangePassword } from "../helpers";
 
 const user = getGun().user().recall({ sessionStorage: true });
 
 export default class User {
-    gunInstance = null;
-    userNode = user;
+    gunReference = null;
+
+    gunInstance() {
+        return this.gunReference;
+    }
 
     static async create(username: string, password: string) {
-        if (user.is) {
-            throw new Error('Existing authenticated user');
-        }
+        debugger;
         const instance = new User();
+        if (user.is) {
+            instance.gunReference = user;
+            return instance;
+        }
         try {
             const createResult = await userCreate(user, username, password);
             if (createResult === true) {
-                const loginResult = await instance.login(username, password);
-                loginResult && (instance.gunInstance = user);
+                const loginResult = await userAuth(user, username, password);
+                loginResult && (instance.gunReference = user);
                 return instance;
             }
         } catch(error) {
             // TODO: throw error here instead of catching
-
             /**
              * TODO: handle these cases
              * If user is already being created: "User is already being created or authenticated!"
@@ -33,7 +37,7 @@ export default class User {
 
     async login (username: string, password: string) {
         try {
-            const authResult = await userAuth(this.userNode, username, password);
+            const authResult = await userAuth(this.gunInstance(), username, password);
             if (authResult) return true;      
         } catch(error) {
             // TODO: throw error here instead of catching
@@ -43,11 +47,18 @@ export default class User {
     }
 
     logout() {
-        this.userNode.leave();
+        this.gunInstance.leave();
     }
 
-    changePassword() {
-
+    async changePassword(username: string, password: string, newPassword: string) {
+        try {
+            const authResult = await userChangePassword(this.gunInstance(), username, password, newPassword);
+            if (authResult) return true;      
+        } catch(error) {
+            // TODO: throw error here instead of catching
+            console.error(error.message);
+        }
+        return null;
     }
 
     remove(username: string, password: string) {
@@ -57,10 +68,11 @@ export default class User {
     }
 
     get isAuthenticated() {
-        return this.userNode.is;
+        return !!this.gunInstance().is;
     }
 
     get publicKey() {
+        return this.gunInstance().is.pub;
 
     }
 
