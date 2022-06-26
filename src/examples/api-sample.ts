@@ -66,6 +66,37 @@
  * ? getParent
  * ? getId
  * ? save
+ * 
+ * 
+ * 
+ * // NOTE: ENCRYPTION
+ * 
+ * class Profile {
+ * 
+ *     @encrypted
+ *     address: string;
+ * 
+ *      @encrypted
+ *      email: string;
+ * 
+ *
+ * }
+ * 
+ * 
+ * const profile = Profile.create()
+ * profile.address = '123 Main St';
+ * profile.trust('address', user.pub);
+ * profile.revoke('address', user.pub);
+ * profile.trustAll(user.pub);
+ * profile.revokeAll(user.pub);
+ * profile.save();
+ * 
+ * profile
+ *  -address
+ *  -email
+ *  -keychain
+ *      -shareid*
+ *          address
 */
 
 
