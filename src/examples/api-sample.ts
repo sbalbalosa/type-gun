@@ -72,8 +72,8 @@
  * // NOTE: ENCRYPTION
  * 
  * class Profile {
- * 
- *     @encrypted
+
+ *     @encryptedField
  *     address: string;
  * 
  *      @encrypted
