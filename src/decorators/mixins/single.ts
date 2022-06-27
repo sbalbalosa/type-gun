@@ -1,7 +1,8 @@
 import { createFieldRawData, hydrateInstance } from "../field";
+import { createEncryptedData, createDecryptedData } from "../encrypted";
 
 export default function singleMixin(constructor) {
-  constructor.isSet = false;
+  constructor.nodeType = 'single';
   constructor.prototype.gunId = null;
   constructor.prototype.parentNode = null;
   
@@ -23,7 +24,8 @@ export default function singleMixin(constructor) {
   }
 
   constructor.prototype.save = async function() {
-    const node = createFieldRawData(this, constructor);
+    let node = createFieldRawData(this, constructor);
+    node = createEncryptedData(node, constructor);
     if (this.gunInstance()) {
       await this.gunInstance().put(node).then();
       return this;
@@ -41,8 +43,9 @@ export default function singleMixin(constructor) {
 
   constructor.prototype.sync = async function() {
     if (this.gunInstance()) {
-      const result = await this.gunInstance().then();
+      let result = await this.gunInstance().then();
       if (result === null) throw new Error('Cannot sync deleted node');
+      result = createDecryptedData(result, constructor);
       return hydrateInstance(this, result);
     }
     throw new Error('No gun instance');

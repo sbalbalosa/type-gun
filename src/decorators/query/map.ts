@@ -1,6 +1,7 @@
+
 import { hydrateInstance } from "../field";
 import { removeProperty } from "../../helpers";
-export default class MultipleQuery {
+export default class MapQuery {
     parent = null;
     target = null;
     constructor(parent, target) {
@@ -8,7 +9,7 @@ export default class MultipleQuery {
         this.target = target;
     }
 
-    setInstance() {
+    mapInstance() {
         if (this.parent.gunInstance()) {
             return this.parent.gunInstance().get(this.target.name.toLowerCase());
         }
@@ -16,44 +17,44 @@ export default class MultipleQuery {
     }
 
     async fetchKeys() {
-        if (this.setInstance()) {
-            return (await this.setInstance().then()) ?? {};
+        if (this.mapInstance()) {
+            return (await this.mapInstance().then()) ?? {};
         }
-        throw new Error('No set instance');
+        throw new Error('No map instance');
     }
 
     async fetchById(id: string) {
-        if (this.setInstance()) {
-            const result = await this.setInstance().get(id).then();
+        if (this.mapInstance()) {
+            const result = await this.mapInstance().get(id).then();
             const instance = this.target.create(this.parent);
-            instance.gunId = result['_']['#'];
+            instance.gunId = id;
             if (result) return hydrateInstance(instance, result);
             return null;
         }
-        throw new Error('No set instance');
+        throw new Error('No map instance');
     }
 
     async fetchAll() {
-        if (this.setInstance()) {
+        if (this.mapInstance()) {
             const keys = await this.fetchKeys();
             let keyCount = Object.keys(removeProperty(keys, '_')).length;
-            const instances = [];
+            const instances = {};
 
             if (keyCount === 0) return instances;
 
             const promise = new Promise(resolve => {
-                this.setInstance().once().map().once((result, key) => {
+                this.mapInstance().once().map().once((result, key) => {
                     if (keys[key]) keyCount--;
                     if (result) {
                         const instance = this.target.create(this.parent);
                         instance.gunId = key;
-                        instances.push(hydrateInstance(instance, result));
+                        instances[key] = hydrateInstance(instance, result);
                     }
                     if (keyCount === 0) resolve(instances);
                 });
             });
             return await promise;
         }
-        throw new Error('No set instance');
+        throw new Error('No map instance');
     }
 }

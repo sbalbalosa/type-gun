@@ -1,7 +1,14 @@
 export const edgeMetadataKey = Symbol("edge");
 
-import MultipleQuery from  './query/multiple';
+import SetQuery from  './query/set';
 import SingleQuery from './query/single';
+import MapQuery from './query/map';
+
+const queryMap = {
+  'set': SetQuery,
+  'map': MapQuery,
+  'single': SingleQuery
+}
 
 export default function edge(constructorFn: () => Function) {
   return function edge(target, propertyKey) {
@@ -21,7 +28,8 @@ export function setupEdges(
   const edgeLookup = Reflect.getMetadata(edgeMetadataKey, instance.constructor);
   if (!edgeLookup) return instance; 
   Object.entries(edgeLookup).forEach(([key, edgeConstructor]) => {
-    instance[key] = edgeConstructor.isSet ? new MultipleQuery(instance, edgeConstructor) : new SingleQuery(instance, edgeConstructor);
+    const query = queryMap[edgeConstructor.nodeType];
+    instance[key] = new query(instance, edgeConstructor);
   });
 
   return instance;

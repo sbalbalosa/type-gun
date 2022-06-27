@@ -70,7 +70,8 @@
  * 
  * 
  * // NOTE: ENCRYPTION
- * 
+ * @keychhain
+ * @node
  * class Profile {
 
  *     @encryptedField
@@ -84,6 +85,7 @@
  * 
  * 
  * const profile = Profile.create()
+ * profile.owner = SEA.pair();
  * profile.address = '123 Main St';
  * profile.trust('address', user.pub);
  * profile.revoke('address', user.pub);
@@ -95,8 +97,40 @@
  *  -address
  *  -email
  *  -keychain
- *      -shareid*
- *          address
+ *      -owner
+ *      -readAccess: {
+ *          [propertyKey]: {
+ *             [pubId]: {
+ *               key: string,
+ *               grantedAt: string
+ *             }
+ *          }
+ *       }
+ * 
+ * {
+ *   owner: 'ownerid',
+ *   readAccess: {
+ *     address: {
+ *        pubId1: {
+ *          key: 'faasfqwekey',
+ *          grantedAt: '12314123'
+ *        }
+ *     }
+ *   }
+ * }
+ * 
+ * 
+ * 
+ * 
+ * // MAP
+ * const profile = Profile.create(org, 'id'); // inject id here
+ * 
+ * profile.firstName = 'John';
+ * profile.lasName = 'Doe';
+ * profile.save();
+ * 
+ * org.profiles.fetchById(id)
+ * org.profiles.fetchAll()
 */
 
 

@@ -10,7 +10,6 @@ export default class User {
     }
 
     static async create(username: string, password: string) {
-        debugger;
         const instance = new User();
         if (user.is) {
             instance.gunReference = user;
