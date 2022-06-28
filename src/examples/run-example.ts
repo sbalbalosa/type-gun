@@ -38,31 +38,40 @@
 
 // profile.save();
 import Organization from "./organization";
-import Employees from "./map/employees";
-import KeyChain from "../decorators/lib/key-chain";
-import ReadAccess from "../decorators/lib/read-access";
-import PropertyAccess from "../decorators/lib/property-access";
-import PublicAccess from "../decorators/lib/public-access";
+import Keychain from "../decorators/lib/keychain";
+import Read from "../decorators/lib/read";
+import Properties from "../decorators/lib/properties";
+import Keys from "../decorators/lib/keys";
 import { getGun } from "../helpers";
 
 const organization = Organization.create(getGun());
 organization.name = "test";
 await organization.save();
 
-const keyChain = KeyChain.create(organization);
+const keyChain = Keychain.create(organization);
 keyChain.owner = "ownerid";
 await keyChain.save();
 
-const readAccess = ReadAccess.create(keyChain, 'pubid1');
-readAccess.grantedAt = '12314123';
-readAccess.key = 'faasfqwekey';
+const keys = Keys.create(keyChain, 'address');
+keys.key = "addess-key";
+keys.generatedAt = "323423523532523";
+await keys.save();
+
+const readAccess = Read.create(keyChain, 'pubid1');
+readAccess.pub = 'pubid1';
 await readAccess.save();
 
+const property = Properties.create(readAccess, 'address');
+property.key = 'asdasqwrsdaseaseqwe';
+property.grantedAt = '123456789';
+await property.save();
 
-const readAccess1 = ReadAccess.create(keyChain, 'pubid2');
-readAccess1.grantedAt = '4564564565634';
-readAccess1.key = 'sdrqweqwe';
-await readAccess1.save();
 
-const all = await keyChain.readAccess.fetchAll();
-console.log(all);
+const address = await keyChain.keys.fetchById('address');
+console.log(address);
+
+const user = await keyChain.read.fetchById('pubid1');
+console.log(user);
+
+const prop = await user.properties.fetchById('address');
+console.log(prop);

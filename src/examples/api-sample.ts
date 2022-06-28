@@ -97,29 +97,31 @@
  *  -address
  *  -email
  *  -keychain
- *      -owner
- *      -readAccess: {
- *          [propertyKey]: {
- *             [pubId]: {
- *               key: string,
- *               grantedAt: string
- *             }
+ *   owner: string,
+ *   keys:  {
+ *      address: {
+ *         key: string,
+ *         generatedAt?: string
+ *      }
+ *   }
+ *   read: 
+ *          pubId1: {
+    *           pub: string,
+        *       properties: {
+        *         address: {
+        *             key: 'asdasqwrsdaseaseqwe',
+        *             grantedAt: '123456789'
+        *         }
+        *       }
  *          }
- *       }
- * 
- * {
- *   owner: 'ownerid',
- *   readAccess: {
- *     address: {
- *        pubId1: {
- *          key: 'faasfqwekey',
- *          grantedAt: '12314123'
- *        }
- *     }
+ *     
  *   }
  * }
  * 
- * 
+ *   upon save check if keychain exists
+ *   check if owner exists;
+ *   if not require pair on save if not provided throw an error
+ *   if owner exists check if key exists if not generate keys
  * 
  * 
  * // MAP
@@ -131,6 +133,20 @@
  * 
  * org.profiles.fetchById(id)
  * org.profiles.fetchAll()
+ * 
+ * 
+ * 
+ * 
+ * Profile.create(org)
+ * 
+ * profile.keychain({
+ *  
+ * })
+ * 
+ * profile.save({
+ * });
+ * 
+ * 
 */
 
 
