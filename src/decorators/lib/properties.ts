@@ -4,7 +4,4 @@ import { map, field } from '../index';
 export default class Properties {
     @field
     key: string | null = null;
-
-    @field
-    grantedAt: string | null = null;
 }

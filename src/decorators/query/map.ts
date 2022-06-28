@@ -16,6 +16,13 @@ export default class MapQuery {
         throw new Error('No parent instance');
     }
 
+    async isExist() {
+        if (this.mapInstance()) {
+            return await this.mapInstance().then() !== null;
+        }
+        throw new Error('No map instance');
+    }
+
     async fetchKeys() {
         if (this.mapInstance()) {
             return (await this.mapInstance().then()) ?? {};

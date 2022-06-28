@@ -4,6 +4,7 @@ export const encryptedFieldMetadataKey = Symbol("encrypted");
 export function getEncrypteds(constructor) {
   return Reflect.getMetadata(encryptedFieldMetadataKey, constructor) ?? [];
 }
+
 export function createEncryptedData(raw, constructor) {
   // const fields = getEncrypteds(constructor);
   // const node = fields.reduce((acc, field) => {

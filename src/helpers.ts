@@ -16,6 +16,16 @@ export const getGun = function () {
   return global.typeGunInstance;
 };
 
+export const getSea = function() {
+  return getGun().SEA;
+}
+
+export const generateRandomKey = async function() {
+  const sea = getSea();
+  const randomPair = await sea.pair();
+  return randomPair.priv;
+}
+
 export const removeProperty = (obj, id) => {
   const { [id]: _, ...rest } = obj;
   return rest;
@@ -50,4 +60,9 @@ export function userChangePassword(userNode, username, password, newPassword) {
       }, { change: newPassword });
   });
   return authPromise;
+}
+
+export async function fetchUser(pub: string) {
+  const user = await getGun().user(pub).then();
+  return user;
 }

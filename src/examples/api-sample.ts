@@ -97,7 +97,8 @@
  *  -address
  *  -email
  *  -keychain
- *   owner: string,
+ *   pub: string,
+ *   epub: string,
  *   keys:  {
  *      address: {
  *         key: string,
@@ -107,6 +108,7 @@
  *   read: 
  *          pubId1: {
     *           pub: string,
+    *           epub: string,
         *       properties: {
         *         address: {
         *             key: 'asdasqwrsdaseaseqwe',
@@ -139,12 +141,18 @@
  * 
  * Profile.create(org)
  * 
+ * Profile.createEncrypted(org, pair);
+ * 
  * profile.keychain({
  *  
  * })
  * 
  * profile.save({
  * });
+ * 
+ * 
+ * If no keychain node has no owner
+ * If has keychain node already has an owner
  * 
  * 
 */

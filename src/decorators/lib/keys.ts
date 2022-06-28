@@ -5,7 +5,4 @@ export default class Keys {
 
    @field
    key?: string;
-
-   @field
-   generatedAt?: string;
 }

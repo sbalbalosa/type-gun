@@ -8,6 +8,9 @@ export default class Read {
    @field
    pub?: string;
 
+   @field
+   epub?: string;
+
    @edge(() => Properties)
    properties?: MapQuery;
 }

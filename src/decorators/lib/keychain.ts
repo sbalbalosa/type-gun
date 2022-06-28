@@ -6,7 +6,10 @@ import Keys from './keys';
 @node
 export default class Keychain {
     @field
-    owner?: string;
+    pub?: string;
+
+    @field
+    epub?: string;
 
     @edge(() => Keys)
     keys?: MapQuery;

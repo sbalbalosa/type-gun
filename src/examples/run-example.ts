@@ -44,7 +44,10 @@ import Properties from "../decorators/lib/properties";
 import Keys from "../decorators/lib/keys";
 import { getGun } from "../helpers";
 
-const organization = Organization.create(getGun());
+
+const user = await testUser();
+
+const organization = Organization.create(user);
 organization.name = "test";
 await organization.save();
 
@@ -70,8 +73,8 @@ await property.save();
 const address = await keyChain.keys.fetchById('address');
 console.log(address);
 
-const user = await keyChain.read.fetchById('pubid1');
-console.log(user);
+const userx = await keyChain.read.fetchById('pubid1');
+console.log(userx);
 
 const prop = await user.properties.fetchById('address');
 console.log(prop);
