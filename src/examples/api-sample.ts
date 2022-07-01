@@ -154,6 +154,9 @@
  * If no keychain node has no owner
  * If has keychain node already has an owner
  * 
+ * const profile = Profile.create(org);
+ * await profile.createKeychain(authority);
+ * 
  * 
 */
 

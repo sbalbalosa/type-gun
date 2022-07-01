@@ -17,7 +17,8 @@ export const getGun = function () {
 };
 
 export const getSea = function() {
-  return getGun().SEA;
+  const global = getGlobal();
+  return global.typeGunSeaInstance;
 }
 
 export const generateRandomKey = async function() {

@@ -10,4 +10,7 @@ const global = getGlobal();
 
 const gun = global.typeGunInstance || Gun([]);
 
+const sea = Gun.SEA;
+
 global.typeGunInstance = gun;
+global.typeGunSeaInstance = sea;

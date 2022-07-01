@@ -4,3 +4,5 @@ export { default as node } from "./node";
 export { default as root } from "./root";
 export { default as set } from "./set";
 export { default as map } from "./map";
+export { default as keychain } from "./keychain";
+export { default as encrypted } from "./encrypted";

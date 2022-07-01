@@ -5,24 +5,32 @@ export function getEncrypteds(constructor) {
   return Reflect.getMetadata(encryptedFieldMetadataKey, constructor) ?? [];
 }
 
-export function createEncryptedData(raw, constructor) {
-  // const fields = getEncrypteds(constructor);
-  // const node = fields.reduce((acc, field) => {
-  //   acc[field] = raw[field]; // TODO: encrypt data
-  //   return acc;
-  // }, {});
-  // return node;
-  return raw;
+export async function createEncryptedData(raw, instance, constructor) {
+  const fields = getEncrypteds(constructor);
+  if (fields.length === 0) return raw;
+
+  const node = await fields.reduce(async (accP, field) => {
+    const acc = await accP;
+    if (raw[field]) {
+      acc[field] = await instance.encryptProperty(field, raw[field]); // TODO: encrypt data
+    }
+    return acc;
+  }, Promise.resolve(raw));
+  return node;
 }
 
-export function createDecryptedData(raw, constructor) {
-  // const fields = getEncrypteds(constructor);
-  // const node = fields.reduce((acc, field) => {
-  //   acc[field] = raw[field]; // TODO: decrypt data
-  //   return acc;
-  // }, {});
-  // return node;
-  return raw;
+export async function createDecryptedData(raw, instance, constructor) {
+  const fields = getEncrypteds(constructor);
+  if (fields.length === 0) return raw;
+
+  const node = await fields.reduce(async (accP, field) => {
+    const acc = await accP;
+    if (raw[field]) {
+      acc[field] = await instance.decryptProperty(field, raw[field]); // TODO: encrypt data
+    }
+    return acc;
+  }, Promise.resolve(raw));
+  return node;
 }
 
 export default function encrypted(target, propertyKey: string) {

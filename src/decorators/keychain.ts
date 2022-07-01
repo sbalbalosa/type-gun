@@ -13,12 +13,13 @@ const sea = getSea();
 export default function keychain(constructor: Function) {
   constructor.prototype.hasAttachedKeychain = true;
   constructor.prototype.authority = null;
-  constructor.prototype.keychain = new SingleQuery(constructor.prototype, Keychain);
+  constructor.prototype.keychain = null;
 
-  constructor.prototype.grantRead = async function(property: string, pub: string) {
-    const readAccess = await this.fetchReadAccess(pub);
+  constructor.prototype.grantRead = async function(property: string, pair) {
+    if (!pair.pub) throw new Error('No public key');
+    const readAccess = await this.fetchReadAccess(pair.pub);
     const authority = await this.fetchAuthority();
-    const propertyAccess = await readAccess.properties.fetchById(property);
+    const propertyAccess = await readAccess.properties.fetchById(property); // TODO fix this
     const decryptedMasterKey = await this.fetchPropertyKey(property);
     const encryptedSharedKey = await sea.encrypt(decryptedMasterKey, await sea.secret(readAccess.epub, authority));
     propertyAccess.key = encryptedSharedKey;
@@ -70,6 +71,18 @@ export default function keychain(constructor: Function) {
     return data;
   }
 
+  constructor.prototype.encryptProperty = async function(property: string, data) {
+    const key = await this.fetchPropertyKey(property);
+    const encrypted = await sea.encrypt(data, key);
+    return encrypted;
+  }
+
+  constructor.prototype.decryptProperty = async function(property: string, data) {
+    const key = await this.fetchPropertyKey(property);
+    const decrypted = await sea.decrypt(data, key);
+    return decrypted;
+  }
+
   constructor.prototype.fetchProperty = async function(property: string) {
     const keychain = await this.fetchKeychain();
     const propertyNode = await keychain.keys.fetchById(property);
@@ -89,10 +102,11 @@ export default function keychain(constructor: Function) {
     return keychain;
   }
 
-  constructor.prototype.fetchReadAccess = async function(pub: string) {
+  constructor.prototype.fetchReadAccess = async function(pair) {
+    // TODO check priv and pub
     const keychain = await this.fetchKeychain();
-    const user = await this.fetchUser(pub);
-    let readAccess = keychain.read.fetch();
+    const user = pair.priv ? pair : await this.fetchUser(pair.pub);
+    let readAccess = await keychain.read.fetchById(user.pub);
     if (!readAccess) {
       readAccess = Read.create(this, user.pub);
       readAccess.pub = user.pub;
@@ -107,8 +121,14 @@ export default function keychain(constructor: Function) {
     return this.authority;
   }
 
-  constructor.prototype.createKeychain = async function() {
-    const authority = await this.fetchAuthority();
+  constructor.prototype.createKeychain = async function(authority) {
+    this.keychain = new SingleQuery(this, Keychain);
+    const keychain = await this.keychain.fetch();
+    // TODO if keychain already exist check if user is the same;
+    this.authority = authority;
+    if (keychain) return this;
+
+    
 
     const node = Keychain.create(this);
     node.pub = authority.pub;
@@ -133,4 +153,12 @@ export default function keychain(constructor: Function) {
     await Promise.all(savePromise);
     return this;
   }
+
+  // constructor.prototype.shared = async function(sharedAuthority) {
+
+  //   const fields = getEncrypteds(constructor);
+  //   const decryptPromise = fields.map(async (field) => {
+
+  //   });
+  // }
 };

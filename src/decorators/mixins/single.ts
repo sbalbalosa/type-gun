@@ -25,7 +25,7 @@ export default function singleMixin(constructor) {
 
   constructor.prototype.save = async function() {
     let node = createFieldRawData(this, constructor);
-    node = createEncryptedData(node, constructor);
+    node = await createEncryptedData(node, this, constructor);
     if (this.gunInstance()) {
       await this.gunInstance().put(node).then();
       return this;
@@ -45,7 +45,7 @@ export default function singleMixin(constructor) {
     if (this.gunInstance()) {
       let result = await this.gunInstance().then();
       if (result === null) throw new Error('Cannot sync deleted node');
-      result = createDecryptedData(result, constructor);
+      result = await createDecryptedData(result, this, constructor);
       return hydrateInstance(this, result);
     }
     throw new Error('No gun instance');

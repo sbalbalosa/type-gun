@@ -37,44 +37,65 @@
 // profile.save();
 
 // profile.save();
-import Organization from "./organization";
-import Keychain from "../decorators/lib/keychain";
-import Read from "../decorators/lib/read";
-import Properties from "../decorators/lib/properties";
-import Keys from "../decorators/lib/keys";
-import { getGun } from "../helpers";
+// import Organization from "./organization";
+import Secret from "./secret";
 
+// import Keychain from "../decorators/lib/keychain";
+// import Read from "../decorators/lib/read";
+// import Properties from "../decorators/lib/properties";
+// import Keys from "../decorators/lib/keys";
+import  testUser  from "./create-user";
+import { getGun, getSea } from "../helpers";
 
+const sea = getSea();
 const user = await testUser();
+const shareUser = await sea.pair();
+const gun = getGun();
 
-const organization = Organization.create(user);
-organization.name = "test";
-await organization.save();
-
-const keyChain = Keychain.create(organization);
-keyChain.owner = "ownerid";
-await keyChain.save();
-
-const keys = Keys.create(keyChain, 'address');
-keys.key = "addess-key";
-keys.generatedAt = "323423523532523";
-await keys.save();
-
-const readAccess = Read.create(keyChain, 'pubid1');
-readAccess.pub = 'pubid1';
-await readAccess.save();
-
-const property = Properties.create(readAccess, 'address');
-property.key = 'asdasqwrsdaseaseqwe';
-property.grantedAt = '123456789';
-await property.save();
+const secret = Secret.create(gun);
+await secret.createKeychain(user);
+secret.message = "test";
+secret.who = 'who am I';
+await secret.save();
 
 
-const address = await keyChain.keys.fetchById('address');
-console.log(address);
+const secret1 = Secret.create(gun);
+await secret1.createKeychain(user);
+await secret1.sync();
+console.log(secret1.message);
+console.log(secret1.who);
 
-const userx = await keyChain.read.fetchById('pubid1');
-console.log(userx);
 
-const prop = await user.properties.fetchById('address');
-console.log(prop);
+await secret1.grantRead('message', shareUser);
+
+
+
+
+
+// const keyChain = Keychain.create(organization);
+// keyChain.owner = "ownerid";
+// await keyChain.save();
+
+// const keys = Keys.create(keyChain, 'address');
+// keys.key = "addess-key";
+// keys.generatedAt = "323423523532523";
+// await keys.save();
+
+// const readAccess = Read.create(keyChain, 'pubid1');
+// readAccess.pub = 'pubid1';
+// await readAccess.save();
+
+// const property = Properties.create(readAccess, 'address');
+// property.key = 'asdasqwrsdaseaseqwe';
+// property.grantedAt = '123456789';
+// await property.save();
+
+
+// const address = await keyChain.keys.fetchById('address');
+// console.log(address);
+
+// const userx = await keyChain.read.fetchById('pubid1');
+// console.log(userx);
+
+// const prop = await user.properties.fetchById('address');
+// console.log(prop);

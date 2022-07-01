@@ -1,6 +1,6 @@
 
-import { createFieldRawData } from "../field";
-import { createEncryptedData } from "../encrypted";
+import { createFieldRawData, hydrateInstance } from "../field";
+import { createEncryptedData, createDecryptedData } from "../encrypted";
 
 export default function multipleMixin(constructor) {
   constructor.nodeType = 'set';
@@ -36,7 +36,7 @@ export default function multipleMixin(constructor) {
 
   constructor.prototype.save = async function() {
     let node = createFieldRawData(this, constructor);
-    node = createEncryptedData(node, constructor);
+    node = await createEncryptedData(node, this, constructor);
     if (this.gunId && this.gunInstance()) {
       await this.gunInstance().put(node).then();
       return this;
@@ -55,6 +55,16 @@ export default function multipleMixin(constructor) {
       // TODO: clarify why uneset is not working
       // this.setInstance().unset(result);
       return this;
+    }
+    throw new Error('No gun instance');
+  }
+
+  constructor.prototype.sync = async function() {
+    if (this.gunInstance()) {
+      let result = await this.gunInstance().then();
+      if (result === null) throw new Error('Cannot sync deleted node');
+      result = await createDecryptedData(result, this, constructor);
+      return hydrateInstance(this, result);
     }
     throw new Error('No gun instance');
   }
