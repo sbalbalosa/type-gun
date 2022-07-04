@@ -67,3 +67,24 @@ export async function fetchUser(pub: string) {
   const user = await getGun().user(pub).then();
   return user;
 }
+
+export async function reduceFields(fields, valueFetcher, defaultObject = {}) {
+    const fieldMap = {};
+    const promiseValues = fields.map(async (field, index) => {
+      try {
+        const decryptedValue = await valueFetcher(field);
+        fieldMap[index.toString()] = field;
+        return decryptedValue;
+      } catch(e) {
+        fieldMap[index.toString()] = field;
+        return null;
+      }
+    });
+    const values = await Promise.all(promiseValues);
+    
+    return values.reduce((acc, value, index) => {
+      if (value === null) return acc;
+      acc[fieldMap[index.toString()]] = value;
+      return acc;
+    }, defaultObject);
+}

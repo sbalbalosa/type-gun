@@ -22,5 +22,8 @@ export default async function testUser() {
     });
     // const create = await createPromise;
     const auth = await authPromise;
-    return user;
+    return {
+        user,
+        auth,
+    };
 }

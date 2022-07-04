@@ -1,3 +1,4 @@
+import { reduceFields } from "../helpers";
 
 export const encryptedFieldMetadataKey = Symbol("encrypted");
 
@@ -8,29 +9,17 @@ export function getEncrypteds(constructor) {
 export async function createEncryptedData(raw, instance, constructor) {
   const fields = getEncrypteds(constructor);
   if (fields.length === 0) return raw;
-
-  const node = await fields.reduce(async (accP, field) => {
-    const acc = await accP;
-    if (raw[field]) {
-      acc[field] = await instance.encryptProperty(field, raw[field]); // TODO: encrypt data
-    }
-    return acc;
-  }, Promise.resolve(raw));
-  return node;
+  return await reduceFields((fields), async (field) => {
+    return await instance.encryptProperty(field, raw[field])
+  }, {...raw});
 }
 
 export async function createDecryptedData(raw, instance, constructor) {
   const fields = getEncrypteds(constructor);
   if (fields.length === 0) return raw;
-
-  const node = await fields.reduce(async (accP, field) => {
-    const acc = await accP;
-    if (raw[field]) {
-      acc[field] = await instance.decryptProperty(field, raw[field]); // TODO: encrypt data
-    }
-    return acc;
-  }, Promise.resolve(raw));
-  return node;
+   return await reduceFields((fields), async (field) => {
+    return await instance.decryptProperty(field, raw[field])
+  }, {...raw});
 }
 
 export default function encrypted(target, propertyKey: string) {
