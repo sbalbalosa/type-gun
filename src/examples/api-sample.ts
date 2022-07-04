@@ -97,9 +97,10 @@
  *  -address
  *  -email
  *  -keychain
- *   pub: string,
+ *   pub: string, // this doesn't make sense if it is written inside the user node
  *   epub: string,
  *   keys:  {
+ *      master: string,
  *      address: {
  *         key: string,
  *         generatedAt?: string
@@ -110,6 +111,7 @@
     *           pub: string,
     *           epub: string,
         *       properties: {
+        *         master: null,
         *         address: {
         *             key: 'asdasqwrsdaseaseqwe',
         *             grantedAt: '123456789'
@@ -157,7 +159,16 @@
  * const profile = Profile.create(org);
  * await profile.createKeychain(authority);
  * 
+ * const keychain = Keychain.create(ownerPair, instance);
+ * keychain.grantReadProperty('address', sharePair);
+ * keychain.revokeReadProperty('address', sharePair);
+ * keychain.grantReadNode(sharePair);
+ * keychain.revokeReadNode(sharePair);
  * 
+ * 
+ * keychain = secret1.keychain.fetch();
+ * keychain.sharedProperties(shairPair);
+ * keychain.shareNode(shairPair);
 */
 
 
