@@ -54,31 +54,32 @@ const unsharedUser = await sea.pair();
 const gun = getGun();
 
 const secret = Secret.create(gun);
-await secret.createKeychain(user.auth.sea);
+await secret.initKeychain(user.user);
 secret.message = "test";
 secret.who = 'who am I';
 await secret.save();
 
-
 const secret1 = Secret.create(gun);
-await secret1.createKeychain(user.auth.sea);
+await secret1.initKeychain(user.user);
 await secret1.sync();
 console.log(secret1.message);
 console.log(secret1.who);
 
-// await secret1.grantReadProperty('message', shareUser);
+await secret1.grantReadProperty('message', shareUser);
+console.log(await secret1.sharedReadProperties(shareUser));
+await secret1.revokeReadProperty('message', shareUser);
+console.log(await secret1.sharedReadProperties(shareUser));
+
+// await secret1.grantReadAllProperty(shareUser);
 // console.log(await secret1.sharedReadProperties(shareUser));
-// await secret1.revokeReadProperty('message', shareUser);
+// await secret1.revokeReadAllProperty(shareUser);
 // console.log(await secret1.sharedReadProperties(shareUser));
 
-await secret1.grantReadAllProperty(shareUser);
-console.log(await secret1.sharedReadProperties(shareUser));
-await secret1.revokeReadAllProperty(shareUser);
-console.log(await secret1.sharedReadProperties(shareUser));
-// await secret1.grantReadProperty('who', unsharedUser);
-// const properties = await secret1.sharedReadProperties(shareUser);
+
+await secret1.grantReadProperty('who', unsharedUser);
+const properties = await secret1.sharedReadProperties(unsharedUser);
 console.log('======== SHARING ========');
-// console.log(properties);
+console.log(properties);
 
 // const unshared = await secret1.sharedReadProperties(unsharedUser);
 // console.log(unshared);

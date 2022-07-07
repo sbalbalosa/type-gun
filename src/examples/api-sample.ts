@@ -157,7 +157,14 @@
  * If has keychain node already has an owner
  * 
  * const profile = Profile.create(org);
- * await profile.createKeychain(authority);
+ * await profile.setupKeychain(user);
+ * 
+ * await profile.initKeychain(user);
+ * await profile.grantReadProperty('address', sharePair);
+ * await profile.revokeReadProperty('address', sharePair);
+ * await profile.grantReadNode(shairPair);
+ * await profile.revokeReadNode(shairPair);
+ * profile.save();
  * 
  * const keychain = Keychain.create(ownerPair, instance);
  * keychain.grantReadProperty('address', sharePair);

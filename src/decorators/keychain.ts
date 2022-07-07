@@ -1,9 +1,9 @@
 import { generateRandomKey, fetchUser, getSea, reduceFields } from "../helpers";
+import Metadata from "./lib/metadata";
 import Keychain from "./lib/keychain";
 import Keys from "./lib/keys";
 import Read from "./lib/read";
 import Properties from "./lib/properties";
-import SingleQuery from './query/single';
 import { getEncrypteds } from "./encrypted";
 
 const sea = getSea();
@@ -14,6 +14,7 @@ export default function keychain(constructor: Function) {
   constructor.prototype.hasAttachedKeychain = true;
   constructor.prototype.authority = null;
   constructor.prototype.keychain = null;
+  constructor.prototype.userInstance = null;
 
   constructor.prototype.grantReadProperty = async function(property: string, pair) {
     if (!pair.pub) throw new Error('No public key'); // TODO: create a helper method to check validity of pair
@@ -54,7 +55,7 @@ export default function keychain(constructor: Function) {
 
   constructor.prototype.fetchPropertyAccess = async function(pair, property: string) {
     const readAccess = await this.fetchReadAccess(pair);
-    const authority = await this.fetchAuthority();
+    const authority = this.fetchAuthority();
     const key = await this.fetchPropertyKey(property);
 
     let propertyAccess = await readAccess.properties.fetchById(property);
@@ -68,7 +69,7 @@ export default function keychain(constructor: Function) {
 
   constructor.prototype.fetchPropertyKey = async function(property: string) {
     const propertyNode = await this.fetchProperty(property);
-    const authority = await this.fetchAuthority();
+    const authority = this.fetchAuthority();
     await propertyNode.sync();
     const data = await sea.decrypt(propertyNode.key, authority);
     return data;
@@ -86,6 +87,11 @@ export default function keychain(constructor: Function) {
     return decrypted;
   }
 
+  constructor.prototype.fetchUserNode = function() {
+    if (!this.userInstance) throw new Error('No user node');
+    return this.userInstance;
+  }
+
   constructor.prototype.fetchProperty = async function(property: string) {
     const keychain = await this.fetchKeychain();
     const propertyNode = await keychain.keys.fetchById(property);
@@ -100,7 +106,9 @@ export default function keychain(constructor: Function) {
   }
 
   constructor.prototype.fetchKeychain = async function() {
-    const keychain = await this.keychain.fetch();
+    const userNode = this.fetchUserNode();
+    const metadata = Metadata.create(userNode);
+    const keychain = await metadata.keychain.fetchById(this.gunPath());
     if (!keychain) throw new Error('No keychain found');
     return keychain;
   }
@@ -119,21 +127,22 @@ export default function keychain(constructor: Function) {
     return readAccess;
   }
 
-  constructor.prototype.fetchAuthority = async function() {
-    if (!this.authority) throw new Error('No assigned authority');
-    return this.authority;
+  constructor.prototype.fetchAuthority = function() {
+    if (!this.userInstance?._?.sea) throw new Error('No assigned authority');
+    return this.userInstance?._?.sea;
   }
 
-  constructor.prototype.createKeychain = async function(authority) {
-    this.keychain = new SingleQuery(this, Keychain);
-    const keychain = await this.keychain.fetch();
-    // TODO if keychain already exist check if user is the same;
-    this.authority = authority;
+  constructor.prototype.initKeychain = async function(userNode) {
+    this.userInstance = userNode;
+    const authority = this.fetchAuthority();
+    const metadata = Metadata.create(userNode);
+    metadata.pub = authority.pub;
+    await metadata.save();
+    const keychain = await  metadata.keychain.fetchById(this.gunPath());
+    // TODO: if keychain already exist check if user is the same;
     if (keychain) return this;
 
-    
-
-    const node = Keychain.create(this);
+    const node = Keychain.create(metadata, this.gunPath());
     node.pub = authority.pub;
     node.epub = authority.epub;
     await node.save();
@@ -143,7 +152,7 @@ export default function keychain(constructor: Function) {
   }
 
   constructor.prototype.generatePropertyKeys = async function(keychain) {
-    const authority = await this.fetchAuthority();
+    const authority = this.fetchAuthority();
 
     const fields = getEncrypteds(constructor);
     const savePromise = fields.map(async (field) => {

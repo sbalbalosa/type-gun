@@ -1,9 +1,9 @@
-import { node, field, edge } from '../index';
+import { field, edge, map } from '../index';
 import MapQuery from '../query/map';
 import Read from './read';
 import Keys from './keys';
 
-@node
+@map
 export default class Keychain {
     @field
     pub?: string;
