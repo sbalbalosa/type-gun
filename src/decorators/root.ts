@@ -1,9 +1,11 @@
 import { IGunInstance } from "gun";
 import singleMixin from "./mixins/single";
+import linkMixin from "./mixins/link";
 import { setupEdges } from "./edge";
 
 export default function root(constructor: Function) {
   singleMixin(constructor);
+  linkMixin(constructor);
 
   constructor.create = function(gunInstance: IGunInstance<any>, name = 'root') {
     const instance = new constructor();

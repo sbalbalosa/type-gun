@@ -2,14 +2,16 @@ import { hydrateInstance } from "../field";
 export default class SingleQuery {
     parent = null;
     target = null;
-    constructor(parent, target) {
+    name = null;
+    constructor(parent, target, name) {
         this.parent = parent;
         this.target = target;
+        this.name = name ? name : this.target.name.toLowerCase();
     }
 
     gunInstance() {
         if (this.parent.gunInstance()) {
-            return this.parent.gunInstance().get(this.target.name.toLowerCase());
+            return this.parent.gunInstance().get(this.name);
         }
         throw new Error('No parent instance');
     }

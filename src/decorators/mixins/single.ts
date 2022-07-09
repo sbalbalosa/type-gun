@@ -1,5 +1,8 @@
 import { createFieldRawData, hydrateInstance } from "../field";
 import { createEncryptedData, createDecryptedData } from "../encrypted";
+import { isLinkPropertyExist } from "../link";
+
+import SingleQuery from "../query/single";
 
 export default function singleMixin(constructor) {
   constructor.nodeType = 'single';
@@ -62,5 +65,26 @@ export default function singleMixin(constructor) {
 
   constructor.prototype.subscribe = function() {
 
+  }
+
+  // TODO: create a type for link object
+  constructor.prototype.link = function() {
+    if (this.gunInstance()) {
+      return {
+        gunNode: this.gunInstance(),
+        query: (instance) => new SingleQuery(instance, constructor)
+      }
+    }
+    throw new Error('No gun instance');
+  }
+
+  constructor.prototype.connect = async function(propertyName: string, link) {
+    if (!isLinkPropertyExist(constructor, propertyName)) throw new Error('No link property found');
+
+    const node = await link.gunNode.then();
+    if (!node) throw new Error('No gun node');
+    await this.gunInstance().get(propertyName).put(node).then();
+    const query = link.query(this);
+    this[propertyName] = query;
   }
 }
