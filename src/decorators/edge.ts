@@ -16,7 +16,7 @@ export default function edge(constructorFn: () => Function) {
     let metadata = Reflect.getMetadata(edgeMetadataKey, constructor) || {};
     metadata = {
       ...metadata,
-      [propertyKey]: constructorFn(),
+      [propertyKey]: constructorFn,
     };
     Reflect.defineMetadata(edgeMetadataKey, metadata, constructor);
   };
@@ -28,8 +28,9 @@ export function setupEdges(
   const edgeLookup = Reflect.getMetadata(edgeMetadataKey, instance.constructor);
   if (!edgeLookup) return instance; 
   Object.entries(edgeLookup).forEach(([key, edgeConstructor]) => {
-    const query = queryMap[edgeConstructor.nodeType];
-    instance[key] = new query(instance, edgeConstructor);
+    const constructor = edgeConstructor();
+    const query = queryMap[constructor.nodeType];
+    instance[key] = new query(instance, constructor);
   });
 
   return instance;

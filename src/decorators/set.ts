@@ -1,11 +1,11 @@
 import multipleMixin from "./mixins/multiple";
-import linkMixin from "./mixins/link";
-import SetQuery from "./query/set";
+import linkMixin, { setLinkMixin } from "./mixins/link";
 import { setupEdges } from "./edge";
 
 export default function set(constructor: Function) {
   multipleMixin(constructor);
   linkMixin(constructor);
+  setLinkMixin(constructor);
   
   constructor.create = function(node) {
     const instance = new constructor();
@@ -13,15 +13,5 @@ export default function set(constructor: Function) {
     instance.gunId = null;
     instance.setId = constructor.name.toLowerCase();
     return setupEdges(instance);
-  }
-
-   constructor.prototype.setLink = function() {
-    if (this.setInstance()) {
-      return {
-        gunNode: this.setInstance(),
-        query: (instance, name) => new SetQuery(instance, constructor, name)
-      }
-    }
-    throw new Error('No gun instance');
   }
 };

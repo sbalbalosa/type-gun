@@ -1,3 +1,4 @@
-import './link/';
+// import './link/';
+import './encryption/';
 
-window.localStorage.clear();
+// window.localStorage.clear();
