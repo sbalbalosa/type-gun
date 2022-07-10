@@ -1,9 +1,10 @@
-import { generateRandomKey, fetchUser, getSea, reduceFields } from '../../helpers';
+import { generateRandomKey, fetchUser, getSea } from '../../helpers';
 import { field, edge } from '../index';
 import { setupEdges } from '../edge';
 import MapQuery from '../query/map';
 import linkMixin from '../mixins/link';
 import multipleMixin from '../mixins/multiple';
+import baseMixin from '../mixins/base';
 import Metadata from './metadata';
 import Read from './read';
 import Keys from './keys';
@@ -12,6 +13,7 @@ import { getEncrypteds } from '../encrypted';
 
 const sea = getSea();
 
+@baseMixin
 @linkMixin
 @multipleMixin
 export default class Keychain {
@@ -102,7 +104,13 @@ export default class Keychain {
     return this;
   }
 
+  /*
+    generate keys for a property to be shared to the input pair
+    OWNER only
+  */
   async fetchPropertyAccess (pair, property: string) {
+    await this.sync();
+    if (!this.isAuthorityOwner()) throw new Error('Authority not an owner');
     const readAccess = await this.fetchReadAccess(pair);
     const authority = this.fetchAuthority();
     const key = await this.fetchPropertyKey(property);
@@ -114,6 +122,38 @@ export default class Keychain {
     propertyAccess.key = await sea.encrypt(key, await sea.secret(pair.epub, authority)); // TODO: create a helper method
     await propertyAccess.save();
     return propertyAccess;
+  }
+
+  /*
+   get the master key node for a property 
+  */
+  async fetchProperty(property: string) {
+    const propertyNode = await this.keys.fetchById(property);
+    if (!propertyNode) throw new Error('No property node');
+    return propertyNode;
+  }
+
+  /*
+    decrypt the master key or the share key for a property
+    Owner or share
+  */
+   async fetchPropertyKey(property: string) {
+    await this.sync(); // TODO: check if this is really needed.
+    const authority = this.fetchAuthority();
+    if (this.isAuthorityOwner()) {
+      const propertyNode = await this.fetchProperty(property);
+      await propertyNode.sync();
+      return await sea.decrypt(propertyNode.key, authority);
+    }
+
+    const readAccess = await this.read.fetchById(authority.pub);
+    if (!readAccess) throw new Error('No read access');
+
+    const propertyAccess = await readAccess.properties.fetchById(property);
+    if (!propertyAccess) throw new Error('No property access');
+
+    const key = await sea.decrypt(propertyAccess.key, await sea.secret(this.epub, authority));
+    return key
   }
 
   async fetchReadAccess(pair) {
@@ -135,36 +175,8 @@ export default class Keychain {
     return shareUser;
   }
 
-   async fetchPropertyKey(property: string) {
-    const propertyNode = await this.fetchProperty(property);
+  isAuthorityOwner() {
     const authority = this.fetchAuthority();
-    await propertyNode.sync();
-    const data = await sea.decrypt(propertyNode.key, authority);
-    return data;
-  }
-
-  async fetchProperty(property: string) {
-    const propertyNode = await this.keys.fetchById(property);
-    if (!propertyNode) throw new Error('No property node');
-    return propertyNode;
-  }
-
-   async sharedReadProperties(sharedAuthority) {
-    const fields = getEncrypteds(this.targetConstructor);
-    return reduceFields(fields, async (field) => {
-        const propertyAccess = await this.fetchPropertySharedAccess(sharedAuthority, field);
-        const encryptedValue = await this.raw(); // TODO: add a helper to get raw encrypted fields 
-        if (!(encryptedValue && encryptedValue[field])) throw new Error('No encrypted value');
-        const decryptedKey = await sea.decrypt(propertyAccess.key, await sea.secret(keychain.epub, sharedAuthority));
-        const decryptedValue = await sea.decrypt(encryptedValue[field], decryptedKey);
-        return decryptedValue;
-    })
-  }
-
-  async fetchPropertySharedAccess(pair, property) {
-    const readAccess = await this.fetchReadAccess(pair);
-    const propertyAccess = await readAccess.properties.fetchById(property);
-    if (propertyAccess) return propertyAccess;
-    throw new Error(`No access to property ${property}`);
+    return authority.pub === this.pub;
   }
 }

@@ -1,9 +1,11 @@
 import { IGunInstance } from "gun";
 import singleMixin from "./mixins/single";
+import baseMixin from "./mixins/base";
 import linkMixin from "./mixins/link";
 import { setupEdges } from "./edge";
 
 export default function root(constructor: Function) {
+  baseMixin(constructor);
   singleMixin(constructor);
   linkMixin(constructor);
 

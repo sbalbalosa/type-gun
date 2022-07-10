@@ -7,6 +7,7 @@ export function getEncrypteds(constructor) {
 }
 
 export async function createEncryptedData(raw, instance, constructor) {
+  if (!instance?.hasKeychain) return raw;
   const fields = getEncrypteds(constructor);
   if (fields.length === 0) return raw;
   return await reduceFields((fields), async (field) => {
@@ -15,6 +16,7 @@ export async function createEncryptedData(raw, instance, constructor) {
 }
 
 export async function createDecryptedData(raw, instance, constructor) {
+  if (!instance?.hasKeychain) return raw;
   const fields = getEncrypteds(constructor);
   if (fields.length === 0) return raw;
    return await reduceFields((fields), async (field) => {
