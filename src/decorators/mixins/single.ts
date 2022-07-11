@@ -30,6 +30,7 @@ export default function singleMixin(constructor) {
     let node = createFieldRawData(this, constructor);
     node = await createEncryptedData(node, this, constructor);
     if (this.gunInstance()) {
+      // TODO: add a check to see if current user could write to this node
       await this.gunInstance().put(node).then();
       return this;
     }

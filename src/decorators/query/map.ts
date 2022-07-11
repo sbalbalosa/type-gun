@@ -33,7 +33,6 @@ export default class MapQuery {
     }
 
     async fetchById(id: string) {
-        debugger;
         if (this.mapInstance()) {
             const result = await this.mapInstance().get(id).then();
             const instance = this.target.create(this.parent);

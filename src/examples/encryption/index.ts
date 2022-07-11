@@ -1,4 +1,5 @@
-import './keychain';
+// import './keychain';
+import './read-access';
 // API SAMPLE
 
 // import { encrypted, field, keychain } from "../../decorators";
