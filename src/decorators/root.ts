@@ -14,7 +14,6 @@ export default function root(constructor: Function) {
     instance.gunId = constructor.name.toLowerCase();
     instance.parentNode = {
       gunInstance: () => gunInstance.get(name),
-      gunPath: () =>  name
     };
     return setupEdges(instance);
   }

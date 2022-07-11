@@ -1,8 +1,5 @@
-import { createFieldRawData, hydrateInstance } from "../field";
-import { createEncryptedData, createDecryptedData } from "../encrypted";
-import { isLinkPropertyExist } from "../link";
-
-import SingleQuery from "../query/single";
+import { createFieldRawData } from "../field";
+import { createEncryptedData } from "../encrypted";
 
 export default function singleMixin(constructor) {
   constructor.nodeType = 'single';
@@ -18,14 +15,6 @@ export default function singleMixin(constructor) {
     return null;
   }
     
-  // TODO: add as a setter
-  constructor.prototype.gunPath = function() {
-    if (this.parentNode && this.gunId) {
-      return `${this.parentNode.gunPath()}/${this.gunId}`;
-    }
-    return null;
-  }
-
   constructor.prototype.save = async function() {
     let node = createFieldRawData(this, constructor);
     node = await createEncryptedData(node, this, constructor);
@@ -56,26 +45,5 @@ export default function singleMixin(constructor) {
 
   constructor.prototype.subscribe = function() {
 
-  }
-
-  // TODO: create a type for link object
-  constructor.prototype.link = function() {
-    if (this.gunInstance()) {
-      return {
-        gunNode: this.gunInstance(),
-        query: (instance) => new SingleQuery(instance, constructor)
-      }
-    }
-    throw new Error('No gun instance');
-  }
-
-  constructor.prototype.connect = async function(propertyName: string, link) {
-    if (!isLinkPropertyExist(constructor, propertyName)) throw new Error('No link property found');
-
-    const node = await link.gunNode.then();
-    if (!node) throw new Error('No gun node');
-    await this.gunInstance().get(propertyName).put(node).then();
-    const query = link.query(this);
-    this[propertyName] = query;
   }
 }

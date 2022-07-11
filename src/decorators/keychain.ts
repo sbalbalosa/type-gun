@@ -24,7 +24,12 @@ export default function keychain(constructor: Function) {
   constructor.prototype.attachKeychain = async function(keychain) {
     if (!keychain.userInstance) throw new Error('keychain has no user instance');
     this.userInstance = keychain.userInstance;
-    await this.connect("keychain", keychain.link());
+    await this.connect("keychain", keychain.childLink());
+  }
+
+  constructor.prototype.initKeychain = async function(userInstance) {
+    this.userInstance = userInstance;
+    await this.query("keychain", Keychain.childQuery);
   }
 
   constructor.prototype.fetchKeychain = async function() {
@@ -37,10 +42,13 @@ export default function keychain(constructor: Function) {
 
   constructor.prototype.fetchPropertyKey = async function(property: string) {
     const keychain = await this.fetchKeychain();
-    const key = this.readKeys[property] && await keychain.fetchPropertyKey(property);
-    if (key) throw new Error('No property key');
-    this.readKeys[property] = key;
-    return this.readKeys[property];
+    // TODO: check why commented code is shared between instance
+    // if (this.readKeys[property]) return this.readKeys[property];
+    const key = await keychain.fetchPropertyKey(property);
+    if (!key) throw new Error('No property key');
+    return key;
+    // this.readKeys[property] = key;
+    // return this.readKeys[property];
   }
 
   constructor.prototype.encryptProperty = async function(property: string, data) {

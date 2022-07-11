@@ -2,7 +2,7 @@ import { generateRandomKey, fetchUser, getSea } from '../../helpers';
 import { field, edge } from '../index';
 import { setupEdges } from '../edge';
 import MapQuery from '../query/map';
-import linkMixin from '../mixins/link';
+import linkMixin, { childLinkMixin } from '../mixins/link';
 import multipleMixin from '../mixins/multiple';
 import baseMixin from '../mixins/base';
 import Metadata from './metadata';
@@ -16,6 +16,7 @@ const sea = getSea();
 @baseMixin
 @linkMixin
 @multipleMixin
+@childLinkMixin
 export default class Keychain {
     @field
     pub?: string;
@@ -32,7 +33,9 @@ export default class Keychain {
     userInstance?: null;
     targetConstructor?: null;
 
-    static async create(userNode, constructor) {
+    static async generate(userNode, constructor) {
+        // TODO: userNode could be a regular gun node or a user instance refactor this to handle both
+        // TODO: take note of SingleQuery adn constructor being undefined when creating a new keychain
         const fetchAuthority = Keychain.prototype.fetchAuthority.bind({
           userInstance: userNode
         });
@@ -52,6 +55,14 @@ export default class Keychain {
 
         await keychain.generatePropertyKeys();
         return setupEdges(keychain);
+    }
+
+    create(node, id) {
+      const instance = new Keychain();
+      instance.parentNode = node;
+      instance.gunId = id;
+      instance.setId = Keychain.name.toLowerCase();
+      return setupEdges(instance);
     }
 
     fetchAuthority () {

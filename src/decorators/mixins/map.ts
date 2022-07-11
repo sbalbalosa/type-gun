@@ -1,11 +1,12 @@
-import { createFieldRawData, hydrateInstance } from "../field";
-import { createEncryptedData, createDecryptedData } from "../encrypted";
+import { createFieldRawData } from "../field";
+import { createEncryptedData } from "../encrypted";
 
 export default function mapMixin(constructor) {
   constructor.nodeType = 'map';
   constructor.prototype.mapId = null;
   constructor.prototype.gunId = null;
   constructor.prototype.parentNode = null;
+  constructor.prototype.detached = false;
   
 
   // TODO: add as a setter
@@ -16,19 +17,19 @@ export default function mapMixin(constructor) {
     return null;
   }
 
-
-  // TODO: add as a setter
-  constructor.prototype.gunInstance = function() {
-    if (this.mapInstance() && this.gunId) {
-      return this.mapInstance().get(this.gunId);
+  constructor.prototype.childInstance = function() {
+    if (this.parentNode && this.parentNode.gunInstance() && this.gunId) {
+      return this.parentNode.gunInstance().get(this.gunId);
     }
     return null;
   }
-    
+
+
   // TODO: add as a setter
-  constructor.prototype.gunPath = function() {
-    if (this.parentNode && this.gunId && this.mapId) {
-      return `${this.parentNode.gunPath()}/${this.mapId}/${this.gunId}`;
+  constructor.prototype.gunInstance = function() {
+    if (this.detached) return this.childInstance();
+    if (this.mapInstance() && this.gunId) {
+      return this.mapInstance().get(this.gunId);
     }
     return null;
   }
