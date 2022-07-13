@@ -14,6 +14,7 @@ export default function map(constructor: Function) {
   
   constructor.create = function(node, id) {
     const instance = new constructor();
+    instance.initMapDefaults();
     instance.parentNode = node;
     instance.gunId = id;
     instance.mapId = constructor.name.toLowerCase();

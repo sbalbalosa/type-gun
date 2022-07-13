@@ -11,6 +11,7 @@ export default function set(constructor: Function) {
   
   constructor.create = function(node) {
     const instance = new constructor();
+    instance.initSetDefaults();
     instance.parentNode = node;
     instance.gunId = null;
     instance.setId = constructor.name.toLowerCase();

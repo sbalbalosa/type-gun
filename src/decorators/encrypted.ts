@@ -19,8 +19,14 @@ export async function createDecryptedData(raw, instance, constructor) {
   if (!instance?.hasKeychain) return raw;
   const fields = getEncrypteds(constructor);
   if (fields.length === 0) return raw;
+  const keychain = await instance.fetchKeychain();
    return await reduceFields((fields), async (field) => {
-    return await instance.decryptProperty(field, raw[field])
+    try {
+      return await instance.decryptProperty(field, raw[field])
+    } catch(error) {
+      if (keychain.isAuthorityOwner()) throw error;
+      return raw[field];
+    }
   }, {...raw});
 }
 

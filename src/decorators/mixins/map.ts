@@ -3,10 +3,27 @@ import { createEncryptedData } from "../encrypted";
 
 export default function mapMixin(constructor) {
   constructor.nodeType = 'map';
-  constructor.prototype.mapId = null;
-  constructor.prototype.gunId = null;
-  constructor.prototype.parentNode = null;
-  constructor.prototype.detached = false;
+
+  constructor.prototype.initMapDefaults = function() {
+    Object.defineProperties(this, {
+      'mapId': {
+        value: null,
+        writable: true
+      },
+      'gunId': {
+        value: null,
+        writable: true
+      },
+      'parentNode': {
+        value: null,
+        writable: true
+      },
+      'detached': {
+        value: false,
+        writable: true
+      }
+    });
+  }
   
 
   // TODO: add as a setter

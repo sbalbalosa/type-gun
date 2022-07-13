@@ -17,9 +17,18 @@ class Person {
     @field
     @encrypted
     sssNumber?: string;
+
+    @field
+    @encrypted
+    workNumber?: string;
 }
 
 const chain = await Keychain.create(user, Person);
 await chain.grantReadProperty('sssNumber', sharePair);
 await chain.revokeReadProperty('sssNumber', sharePair);
 console.log(chain);
+
+const chain2 = await Keychain.create(user, Person);
+await chain2.grantReadProperty('workNumber', sharePair);
+console.log(chain2);
+

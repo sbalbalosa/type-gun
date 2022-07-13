@@ -5,12 +5,28 @@ import Keychain from "./lib/keychain";
 const sea = getSea();
 
 export default function keychain(constructor: Function) {
-  constructor.prototype.keychain = null;
-  constructor.prototype.userInstance = null;
-  constructor.prototype.hasKeychain = true;
-  constructor.prototype.readKeys = {}; // TODO: create a cache solution
-
   link(constructor, "keychain");
+
+  constructor.prototype.initKeychainDefaults = function() {
+    Object.defineProperties(this, {
+      'keychain': {
+        value: null,
+        writable: true
+      },
+      'userInstance': {
+        value: null,
+        writable: true
+      },
+      'hasKeychain': {
+        value: true,
+        writable: true
+      },
+      'readKeys': { //TODO: has cache solution
+        value: {},
+        writable: true
+      },
+    });
+  }
 
   constructor.prototype.fetchAuthority = function() {
     const fetchAuthority = Keychain.prototype.fetchAuthority.bind({
@@ -21,15 +37,19 @@ export default function keychain(constructor: Function) {
     return authority;
   }
 
-  constructor.prototype.attachKeychain = async function(keychain) {
+  constructor.prototype.attach = async function(keychain) {
+    this.initKeychainDefaults();
     if (!keychain.userInstance) throw new Error('keychain has no user instance');
     this.userInstance = keychain.userInstance;
     await this.connect("keychain", keychain.childLink());
+    return this;
   }
 
-  constructor.prototype.initKeychain = async function(userInstance) {
+  constructor.prototype.unlock = async function(userInstance) {
+    this.initKeychainDefaults();
     this.userInstance = userInstance;
     await this.query("keychain", Keychain.childQuery);
+    return this;
   }
 
   constructor.prototype.fetchKeychain = async function() {
@@ -42,11 +62,11 @@ export default function keychain(constructor: Function) {
 
   constructor.prototype.fetchPropertyKey = async function(property: string) {
     const keychain = await this.fetchKeychain();
-    // TODO: check why commented code is shared between instance
     // if (this.readKeys[property]) return this.readKeys[property];
     const key = await keychain.fetchPropertyKey(property);
     if (!key) throw new Error('No property key');
     return key;
+    // TODO: cache solution here is buggy create a new branch to solve this
     // this.readKeys[property] = key;
     // return this.readKeys[property];
   }

@@ -11,6 +11,7 @@ export default function root(constructor: Function) {
 
   constructor.create = function(gunInstance: IGunInstance<any>, name = 'root') {
     const instance = new constructor();
+    instance.initSingleDefaults();
     instance.gunId = constructor.name.toLowerCase();
     instance.parentNode = {
       gunInstance: () => gunInstance.get(name),

@@ -21,12 +21,6 @@ export function createFieldRawData(instance, constructor) {
   return node;
 }
 
-
-export function createFieldInstance(constructor, result) {
-  const instance = new constructor();
-  return hydrateInstance(instance, result);
-}
-
 export default function field(target, propertyKey: string) {
   const constructor = target.constructor || target;
   const metadata = getFields(constructor);

@@ -3,9 +3,19 @@ import { createEncryptedData } from "../encrypted";
 
 export default function singleMixin(constructor) {
   constructor.nodeType = 'single';
-  constructor.prototype.gunId = null;
-  constructor.prototype.parentNode = null;
-  
+
+  constructor.prototype.initSingleDefaults = function() {
+    Object.defineProperties(this, {
+      'gunId': {
+        value: null,
+        writable: true
+      },
+      'parentNode': {
+        value: null,
+        writable: true
+      },
+    });
+  }
 
   // TODO: add as a setter
   constructor.prototype.gunInstance = function() {

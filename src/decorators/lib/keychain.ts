@@ -3,7 +3,7 @@ import { field, edge } from '../index';
 import { setupEdges } from '../edge';
 import MapQuery from '../query/map';
 import linkMixin, { childLinkMixin } from '../mixins/link';
-import multipleMixin from '../mixins/multiple';
+import mapMixin from '../mixins/map';
 import baseMixin from '../mixins/base';
 import Metadata from './metadata';
 import Read from './read';
@@ -15,7 +15,7 @@ const sea = getSea();
 
 @baseMixin
 @linkMixin
-@multipleMixin
+@mapMixin
 @childLinkMixin
 export default class Keychain {
     @field
@@ -33,9 +33,7 @@ export default class Keychain {
     userInstance?: null;
     targetConstructor?: null;
 
-    static async generate(userNode, constructor) {
-        // TODO: userNode could be a regular gun node or a user instance refactor this to handle both
-        // TODO: take note of SingleQuery adn constructor being undefined when creating a new keychain
+    static async create(userNode, constructor) {
         const fetchAuthority = Keychain.prototype.fetchAuthority.bind({
           userInstance: userNode
         });
@@ -44,9 +42,7 @@ export default class Keychain {
         metadata.pub = authority.pub;
         await metadata.save();
 
-        const keychain = new Keychain();
-        keychain.parentNode = metadata;
-        keychain.setId = keychain.constructor.name.toLowerCase();
+        const keychain = Keychain.createInstance(metadata, constructor.name.toLowerCase());
         keychain.userInstance = userNode;
         keychain.pub = authority.pub;
         keychain.epub = authority.epub;
@@ -57,12 +53,13 @@ export default class Keychain {
         return setupEdges(keychain);
     }
 
-    create(node, id) {
+    private static createInstance(node, id) {
       const instance = new Keychain();
+      instance.initMapDefaults();
       instance.parentNode = node;
       instance.gunId = id;
-      instance.setId = Keychain.name.toLowerCase();
-      return setupEdges(instance);
+      instance.mapId = Keychain.name.toLowerCase();
+      return instance;
     }
 
     fetchAuthority () {
@@ -70,13 +67,17 @@ export default class Keychain {
         return this.userInstance?._?.sea;
     }
 
+    // TODO: create a way to regenerate keys
+
     async generatePropertyKeys() {
         const authority = this.fetchAuthority();
 
         const fields = getEncrypteds(this.targetConstructor);
         const savePromise = fields.map(async (field) => {
-            const randomKey = await generateRandomKey();
             const node = Keys.create(this, field);
+            await node.sync();
+            if (node.key) return;
+            const randomKey = await generateRandomKey();
             node.key = await sea.encrypt(randomKey, authority);
             await node.save();
         });
@@ -85,31 +86,31 @@ export default class Keychain {
         return this;
   }
 
-  async grantReadProperty(property: string, pair) {
+  async grantRead(property: string, pair) {
     if (!pair.pub) throw new Error('No public key'); // TODO: create a helper method to check validity of pair
     const propertyAccess = await this.fetchPropertyAccess(pair, property);
     return !!propertyAccess;
   }
 
-  async revokeReadProperty(property: string, pair) {
+  async revokeRead(property: string, pair) {
     const propertyAccess = await this.fetchPropertyAccess(pair, property);
     await propertyAccess.remove();
     return true;
   }
 
-  async grantReadAllProperty(pub: string) {
+  async grangReadAll(pair) {
     const fields = getEncrypteds(this.targetConstructor);
     const savePromise = fields.map(async (field) => {
-        await this.grantReadProperty(field, pub);
+        await this.grantRead(field, pair);
     });
     await Promise.all(savePromise);
     return this;
   }
 
-  async revokeReadAllProperty(pub: string) {
+  async revokeReadAll(pair) {
     const fields = getEncrypteds(this.targetConstructor);
     const removePromise = fields.map(async (field) => {
-        await this.revokeReadProperty(field, pub);
+        await this.revokeRead(field, pair);
     });
     await Promise.all(removePromise);
     return this;

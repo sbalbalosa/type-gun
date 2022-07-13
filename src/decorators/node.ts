@@ -10,6 +10,7 @@ export default function node(constructor: Function) {
 
   constructor.create = function(node) {
     const instance = new constructor();
+    instance.initSingleDefaults();
     instance.parentNode = node;
     instance.gunId = constructor.name.toLowerCase();
     return setupEdges(instance);

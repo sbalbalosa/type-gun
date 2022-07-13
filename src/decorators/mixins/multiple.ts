@@ -4,11 +4,27 @@ import { createEncryptedData } from "../encrypted";
 
 export default function multipleMixin(constructor) {
   constructor.nodeType = 'set';
-  constructor.prototype.setId = null;
-  constructor.prototype.gunId = null;
-  constructor.prototype.parentNode = null;
-  constructor.prototype.detached = false;
   
+  constructor.prototype.initSetDefaults = function() {
+    Object.defineProperties(this, {
+      'setId': {
+        value: null,
+        writable: true
+      },
+      'gunId': {
+        value: null,
+        writable: true
+      },
+      'parentNode': {
+        value: null,
+        writable: true
+      },
+      'detached': {
+        value: false,
+        writable: true
+      }
+    });
+  }
 
   // TODO: add as a setter
   constructor.prototype.setInstance = function() {
