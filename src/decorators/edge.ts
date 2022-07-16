@@ -3,11 +3,13 @@ export const edgeMetadataKey = Symbol("edge");
 import SetQuery from  './query/set';
 import SingleQuery from './query/single';
 import MapQuery from './query/map';
+import ListQuery from './query/list';
 
 const queryMap = {
   'set': SetQuery,
   'map': MapQuery,
-  'single': SingleQuery
+  'single': SingleQuery,
+  'list': ListQuery
 }
 
 export default function edge(constructorFn: () => Function) {

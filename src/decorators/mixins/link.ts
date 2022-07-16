@@ -49,6 +49,8 @@ export function childLinkMixin(constructor) {
   }
 }
 
+// TODO: mapLinkMixin and setLinkMixin looks the same
+
 export function mapLinkMixin(constructor) {
   childLinkMixin(constructor);
   constructor.mapQuery = (instance, name) => new MapQuery(instance, constructor, name);
@@ -78,5 +80,17 @@ export function setLinkMixin(constructor) {
   }
 }
 
+export function listLinkMixin(constructor) {
+  childLinkMixin(constructor);
 
-
+  constructor.listQuery = (instance, name) => new SetQuery(instance, constructor, name);
+  constructor.prototype.listLink = function() {
+    if (this.listInstance()) {
+      return {
+        gunNode: this.listInstance(),
+        query: constructor.listQuery
+      }
+    }
+    throw new Error('No gun instance');
+  }
+}
