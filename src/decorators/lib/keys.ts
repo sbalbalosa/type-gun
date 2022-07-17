@@ -1,8 +1,10 @@
-import { map, field } from '../index';
+import { list, field, link } from '../index';
 
-@map
+@list
 export default class Keys {
-
    @field
    key?: string;
+
+   @link
+   master?: null;
 }

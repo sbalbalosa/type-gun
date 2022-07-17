@@ -76,10 +76,15 @@ export default class ListQuery {
     async fetchLastIndex() {
         if (this.listInstance()) {
             const lastIndex = await this.listInstance().get('lastIndex').then();
-            if (lastIndex) return lastIndex;
+            if (lastIndex !== null || lastIndex !== undefined) return lastIndex;
             throw new Error('No list item saved');
         }
         throw new Error('No list instance');
+    }
+
+    async length() {
+        const keys = await this.fetchKeys();
+        return Object.values(keys).filter(value => value !== null).length;
     }
 
     async fetchNext(node) {

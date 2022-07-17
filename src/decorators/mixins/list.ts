@@ -72,7 +72,7 @@ export default function listMixin(constructor) {
       await this.listInstance().put({
         lastIndex: 0,
         ['0']: node
-      });
+      }).then();
       this.gunId = 0;
       return this;
     }

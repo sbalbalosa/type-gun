@@ -1,4 +1,4 @@
 // import './link/';
-import './list/';
+import './encryption/keychain';
 
-window.localStorage.clear();
+// window.localStorage.clear();

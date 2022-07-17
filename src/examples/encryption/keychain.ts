@@ -24,11 +24,11 @@ class Person {
 }
 
 const chain = await Keychain.create(user, Person);
-await chain.grantReadProperty('sssNumber', sharePair);
-await chain.revokeReadProperty('sssNumber', sharePair);
-console.log(chain);
+await chain.grantRead('sssNumber', sharePair);
+// await chain.revokeReadProperty('sssNumber', sharePair);
+// console.log(chain);
 
-const chain2 = await Keychain.create(user, Person);
-await chain2.grantReadProperty('workNumber', sharePair);
-console.log(chain2);
+// const chain2 = await Keychain.create(user, Person);
+// await chain2.grantReadProperty('workNumber', sharePair);
+// console.log(chain2);
 

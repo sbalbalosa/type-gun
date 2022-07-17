@@ -7,8 +7,8 @@ import mapMixin from '../mixins/map';
 import baseMixin from '../mixins/base';
 import Metadata from './metadata';
 import Read from './read';
-import Keys from './keys';
 import Properties from './properties';
+import Keys from './keys';
 import { getEncrypteds } from '../encrypted';
 
 const sea = getSea();
@@ -24,8 +24,8 @@ export default class Keychain {
     @field
     epub?: string;
 
-    @edge(() => Keys)
-    keys?: MapQuery;
+    @edge(() => Properties)
+    properties?: MapQuery;
 
     @edge(() => Read)
     read?: MapQuery;
@@ -74,12 +74,17 @@ export default class Keychain {
 
         const fields = getEncrypteds(this.targetConstructor);
         const savePromise = fields.map(async (field) => {
-            const node = Keys.create(this, field);
-            await node.sync();
-            if (node.key) return;
+            const property = Properties.create(this, field);
+
+            await property.sync();
+            const keyCount = await property.keys.length();
+            if (keyCount > 0) return;
+            property.name = field;
+            await property.save();
+            const key = Keys.create(property);
             const randomKey = await generateRandomKey();
-            node.key = await sea.encrypt(randomKey, authority);
-            await node.save();
+            key.key = await sea.encrypt(randomKey, authority);
+            await key.save();
         });
 
         await Promise.all(savePromise);
@@ -88,12 +93,12 @@ export default class Keychain {
 
   async grantRead(property: string, pair) {
     if (!pair.pub) throw new Error('No public key'); // TODO: create a helper method to check validity of pair
-    const propertyAccess = await this.fetchPropertyAccess(pair, property);
+    const propertyAccess = await this.createReadKeyAccess(pair, property);
     return !!propertyAccess;
   }
 
   async revokeRead(property: string, pair) {
-    const propertyAccess = await this.fetchPropertyAccess(pair, property);
+    const propertyAccess = await this.createReadKeyAccess(pair, property);
     await propertyAccess.remove();
     return true;
   }
@@ -120,42 +125,50 @@ export default class Keychain {
     generate keys for a property to be shared to the input pair
     OWNER only
   */
-  async fetchPropertyAccess (pair, property: string) {
-    await this.sync();
+  async createReadKeyAccess (pair, property: string) {
     if (!this.isAuthorityOwner()) throw new Error('Authority not an owner');
-    const readAccess = await this.fetchReadAccess(pair);
     const authority = this.fetchAuthority();
-    const key = await this.fetchPropertyKey(property);
+    const readAccess = await this.createReadAccess(pair);
+    const ownerKeyAccess = await this.fetchOwnerKeyNode(property); // owner
 
     let propertyAccess = await readAccess.properties.fetchById(property);
     if (!propertyAccess) {
       propertyAccess = Properties.create(readAccess, property);
     };
-    propertyAccess.key = await sea.encrypt(key, await sea.secret(pair.epub, authority)); // TODO: create a helper method
+    propertyAccess.name = property; // TODO: check if this still needed.
     await propertyAccess.save();
-    return propertyAccess;
+
+    let sharedKeyAccess = await propertyAccess.keys.fetchLast();
+    if (!sharedKeyAccess) {
+      sharedKeyAccess = Keys.create(propertyAccess);
+    }
+    const masterKey = await sea.decrypt(ownerKeyAccess.key, authority);
+    sharedKeyAccess.key = await sea.encrypt(masterKey, await sea.secret(pair.epub, authority)); // TODO: create a helper method
+    await sharedKeyAccess.save();
+    await sharedKeyAccess.connect('master', ownerKeyAccess.childLink());
+    return sharedKeyAccess;
   }
 
   /*
    get the master key node for a property 
   */
-  async fetchProperty(property: string) {
-    const propertyNode = await this.keys.fetchById(property);
-    if (!propertyNode) throw new Error('No property node');
-    return propertyNode;
-  }
 
+  async fetchOwnerKeyNode(property: string) {
+    const propertyNode = await this.properties.fetchById(property);
+    if (!propertyNode) throw new Error('No property node');
+    const keyNode = await propertyNode.keys.fetchLast();
+    if (!keyNode) throw new Error('No key node');
+    return keyNode;
+  }
   /*
     decrypt the master key or the share key for a property
     Owner or share
   */
-   async fetchPropertyKey(property: string) {
-    await this.sync(); // TODO: check if this is really needed.
+   async fetchPropertyKeyAccess(property: string) {
     const authority = this.fetchAuthority();
     if (this.isAuthorityOwner()) {
-      const propertyNode = await this.fetchProperty(property);
-      await propertyNode.sync();
-      return await sea.decrypt(propertyNode.key, authority);
+      const keyOwnerNode = await this.fetchOwnerKeyNode(property);
+      return keyOwnerNode;
     }
 
     const readAccess = await this.read.fetchById(authority.pub);
@@ -164,11 +177,13 @@ export default class Keychain {
     const propertyAccess = await readAccess.properties.fetchById(property);
     if (!propertyAccess) throw new Error('No property access');
 
-    const key = await sea.decrypt(propertyAccess.key, await sea.secret(this.epub, authority));
-    return key
+    const keyAccess = await propertyAccess.keys.fetchLast();
+    if (!keyAccess) throw new Error('No key access');
+
+    return keyAccess;
   }
 
-  async fetchReadAccess(pair) {
+  async createReadAccess(pair) {
     // TODO: check priv and pub
     const user = pair.priv ? pair : await this.fetchUser(pair.pub);
     let readAccess = await this.read.fetchById(user.pub);
