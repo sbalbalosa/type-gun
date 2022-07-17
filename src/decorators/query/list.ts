@@ -53,17 +53,19 @@ export default class ListQuery {
             let keyCount = Object.keys(removeProperty(keys, '_')).length;
             const instances = {};
 
-            if (keyCount === 0) return instances;
+            const emptyNodeCount = Object.values(keys).filter(v => v === null).length;
+            let finalKeyCount = keyCount - emptyNodeCount;
+            if (finalKeyCount === 0) return instances;
 
             const promise = new Promise(resolve => {
                 this.listInstance().once().map().once((result, key) => {
-                    if (keys[key]) keyCount--;
+                    if (keys[key]) finalKeyCount--;
                     if (result) {
                         const instance = this.target.create(this.parent);
                         instance.gunId = key;
                         instances[key] = hydrateInstance(instance, result);
                     }
-                    if (keyCount === 0) resolve(instances);
+                    if (finalKeyCount === 0) resolve(instances);
                 });
             });
             return await promise;
@@ -81,13 +83,13 @@ export default class ListQuery {
     }
 
     async fetchNext(node) {
-        if (!node.gunId) throw new Error('Node has no index');
+        if (!node.gunId && node.gunId !== 0) throw new Error('Node has no index');
         const lastIndex = await this.fetchLastIndex();
         if (node.gunId === lastIndex) throw new Error('No next node');
 
         let current = node.gunId + 1;
         let result = null;
-        while (current !== lastIndex) {
+        while (current <= lastIndex) {
             result = await this.fetchById(current);
             if (result) return result;
             current++;
@@ -97,13 +99,13 @@ export default class ListQuery {
     }
 
     async fetchPrevious(node) {
-        if (!node.gunId) throw new Error('Node has no index');
+        if (!node.gunId && node.gunId !== 0) throw new Error('Node has no index');
         if (node.gunId === 0) throw new Error('No previous node');
         
 
         let current = node.gunId - 1;
         let result = null;
-        while (current !== 0) {
+        while (current >= 0) {
             result = await this.fetchById(current);
             if (result) return result;
             current--;

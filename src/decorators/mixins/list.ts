@@ -51,7 +51,7 @@ export default function listMixin(constructor) {
   // TODO: add as a setter
   constructor.prototype.gunInstance = function() {
     if (this.detached) return this.childInstance();
-    if (this.listInstance() && this.gunId) {
+    if (this.listInstance() && (this.gunId || this.gunId === 0)) {
       return this.listInstance().get(this.gunId);
     }
     return null;
@@ -66,21 +66,34 @@ export default function listMixin(constructor) {
       return this;
     }
 
-    const lastIndex = (await this.listInstance().get('lastIndex').then()) ?? 0;
+    const lastIndex = await this.listInstance().get('lastIndex').then();
+
+    if (lastIndex === undefined || lastIndex === null) {
+      await this.listInstance().put({
+        lastIndex: 0,
+        ['0']: node
+      });
+      this.gunId = 0;
+      return this;
+    }
+
     if (this.listInstance()) {
       const newIndex= lastIndex + 1;
       await this.listInstance().put({
         lastIndex: newIndex,
         [`${newIndex}`]: node
       });
+      this.gunId = newIndex
       return this;
     }
+
+    throw new Error('Could not save');
     
   }
 
   // TODO: looks identical to set and map
   constructor.prototype.remove = async function() {
-    if (this.gunId && this.gunInstance() && this.listInstance()) {
+    if (this.gunId && this.gunInstance()) {
       await this.gunInstance().put(null).then();
       this.gunId = null;
       // TODO: clarify why uneset is not working
