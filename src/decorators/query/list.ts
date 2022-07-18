@@ -51,7 +51,7 @@ export default class ListQuery {
         if (this.listInstance()) {
             const keys = await this.fetchKeys();
             let keyCount = Object.keys(removeProperty(keys, '_')).length;
-            const instances = {};
+            const instances = [];
 
             const emptyNodeCount = Object.values(keys).filter(v => v === null).length;
             let finalKeyCount = keyCount - emptyNodeCount;
@@ -63,7 +63,7 @@ export default class ListQuery {
                     if (result) {
                         const instance = this.target.create(this.parent);
                         instance.gunId = key;
-                        instances[key] = hydrateInstance(instance, result);
+                        instances.push(hydrateInstance(instance, result));
                     }
                     if (finalKeyCount === 0) resolve(instances);
                 });

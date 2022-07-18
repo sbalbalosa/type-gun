@@ -186,9 +186,20 @@ export default class Keychain {
     return sharedKeyAccess;
   }
 
-  /*
-   get the master key node for a property 
-  */
+  async fetchPropertyNode(property: string) {
+    const authority = this.fetchAuthority();
+    let propertyNode;
+    if (this.isAuthorityOwner()) {
+      propertyNode = await this.properties?.fetchById(property);
+      if (!propertyNode) throw new Error('No property node');
+      return propertyNode;
+    }
+    const readNode = await this.read?.fetchById(authority.pub);
+    if (!readNode) throw new Error('No read node');
+    propertyNode = await readNode.properties.fetchById(property);
+    return propertyNode;
+  }
+
 
   async fetchOwnerKeyNode(property: string) {
     const propertyNode = await this.properties.fetchById(property);
@@ -213,12 +224,51 @@ export default class Keychain {
     Owner or share
   */
    async fetchPropertyKeyAccess(property: string) {
-    const authority = this.fetchAuthority();
     if (this.isAuthorityOwner()) {
       const keyOwnerNode = await this.fetchOwnerKeyNode(property);
       return keyOwnerNode;
     }
     return await this.fetchSharedKeyNode(property);
+  }
+
+  async encryptProperty(property: string, data) {
+    if (!this.isAuthorityOwner()) throw new Error('Authority not owner');
+    const authority = this.fetchAuthority();
+    const keyNode = await this.fetchOwnerKeyNode(property);
+    const decryptedKey = await sea.decrypt(keyNode.key, authority);
+    const result = await sea.encrypt(data, decryptedKey);
+    if (!result) throw new Error('Could not encrypt data');
+    return result;
+  }
+
+
+  // TODO: refactor create service for owner and shared with same api to avoid if conditions
+
+  async decryptProperty(property: string, data) {
+    const propertyNode = await this.fetchPropertyNode(property);
+    const keys = await propertyNode.keys.fetchAll();
+    const authority = this.fetchAuthority();
+    const decryptPromises = keys.map(async (keyNode) => {
+      let key;
+      let decryptedData
+      if (this.isAuthorityOwner()) {
+        key = await sea.decrypt(keyNode.key, authority);
+        decryptedData = await sea.decrypt(data, key);
+      } else {
+        if (!this.epub) throw new Error('No owner epub');
+        const masterKeyNode = await keyNode.master.fetch();
+        const sharedKey = await sea.decrypt(keyNode.key, await sea.secret(this.epub, authority));
+        key = await sea.decrypt(masterKeyNode.key, sharedKey);
+        decryptedData = await sea.decrypt(data, key);
+      }
+      if (decryptedData) return decryptedData;
+      throw new Error('Could not decrypt data');
+    });
+    try {
+      await Promise.any(decryptPromises);
+    } catch(e) {
+      throw e;
+    }
   }
 
   async fetchOrCreateReadNode(pair) {

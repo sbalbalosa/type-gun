@@ -63,7 +63,7 @@ export default function keychain(constructor: Function) {
   constructor.prototype.fetchPropertyKey = async function(property: string) {
     const keychain = await this.fetchKeychain();
     // if (this.readKeys[property]) return this.readKeys[property];
-    const key = await keychain.fetchPropertyKey(property);
+    const key = await keychain.fetchPropertyKeyAccess(property);
     if (!key) throw new Error('No property key');
     return key;
     // TODO: cache solution here is buggy create a new branch to solve this
@@ -72,14 +72,14 @@ export default function keychain(constructor: Function) {
   }
 
   constructor.prototype.encryptProperty = async function(property: string, data) {
-    const key = await this.fetchPropertyKey(property);
-    const encrypted = await sea.encrypt(data, key);
+    const keychain = await this.fetchKeychain();
+    const encrypted = await keychain.encryptProperty(property, data);
     return encrypted;
   }
 
   constructor.prototype.decryptProperty = async function(property: string, data) {
-    const key = await this.fetchPropertyKey(property);
-    const decrypted = await sea.decrypt(data, key);
-    return decrypted;
+    const keychain = await this.fetchKeychain();
+    const decryptedData = await keychain.decryptProperty(property, data);
+    return decryptedData;
   }
 };
