@@ -91,15 +91,52 @@ export default class Keychain {
         return this;
   }
 
+  async regenerateMasterKey(property: string) {
+    if (!this.isAuthorityOwner()) throw new Error('Authority not an owner');
+    const authority = this.fetchAuthority();
+    const propertyNode = await this.properties.fetchById(property);
+    if (!propertyNode) throw new Error('No property node');
+    let keyNode = await propertyNode.keys.fetchLast();
+    if (!keyNode) throw new Error('No key node');
+    keyNode = Keys.create(propertyNode);
+    const randomKey = await generateRandomKey();
+    keyNode.key = await sea.encrypt(randomKey, authority);
+    await keyNode.save();
+
+    const readNodesLookup = await this.read?.fetchAll();
+    const readNodes = readNodesLookup && Object.values(readNodesLookup);
+    if (readNodes && readNodes.length > 0) {
+      const savePromises = readNodes.map(async (readNode) => {
+        const sharedPropertyNode = await readNode.properties.fetchById(property);
+        if (!sharedPropertyNode) return;
+        let sharedKeyNode = await sharedPropertyNode.keys.fetchLast();
+        if (!sharedKeyNode) return;
+        sharedKeyNode = Keys.create(sharedPropertyNode);
+        sharedKeyNode.key = await sea.encrypt(keyNode.key, await sea.secret(readNode.epub, authority));
+        await sharedKeyNode.save();
+        await sharedKeyNode.connect('master', keyNode.childLink());
+      });
+
+      await Promise.all(savePromises);
+    }
+    
+
+    // const readNode = await this.fetchUpdatedReadKeyNode(); 
+    // return keyNode.key;
+
+    // TODO: fetch all read nodes and regenerate their keys
+  }
+
   async grantRead(property: string, pair) {
     if (!pair.pub) throw new Error('No public key'); // TODO: create a helper method to check validity of pair
-    const propertyAccess = await this.createReadKeyAccess(pair, property);
-    return !!propertyAccess;
+    const keyNode = await this.fetchUpdatedReadKeyNode(pair, property);
+    return !!keyNode;
   }
 
   async revokeRead(property: string, pair) {
-    const propertyAccess = await this.createReadKeyAccess(pair, property);
-    await propertyAccess.remove();
+    const keyNode = await this.fetchUpdatedReadKeyNode(pair, property);
+    await keyNode.remove();
+    await this.regenerateMasterKey(property);
     return true;
   }
 
@@ -125,10 +162,10 @@ export default class Keychain {
     generate keys for a property to be shared to the input pair
     OWNER only
   */
-  async createReadKeyAccess (pair, property: string) {
+  async fetchUpdatedReadKeyNode (pair, property: string) {
     if (!this.isAuthorityOwner()) throw new Error('Authority not an owner');
     const authority = this.fetchAuthority();
-    const readAccess = await this.createReadAccess(pair);
+    const readAccess = await this.fetchOrCreateReadNode(pair);
     const ownerKeyAccess = await this.fetchOwnerKeyNode(property); // owner
 
     let propertyAccess = await readAccess.properties.fetchById(property);
@@ -160,6 +197,17 @@ export default class Keychain {
     if (!keyNode) throw new Error('No key node');
     return keyNode;
   }
+
+  async fetchSharedKeyNode(property: string) {
+    const authority = this.fetchAuthority();
+    const readAccess = await this.read.fetchById(authority.pub);
+    if (!readAccess) throw new Error('No read access');
+    const propertyAccess = await readAccess.properties.fetchById(property);
+    if (!propertyAccess) throw new Error('No property access');
+    const keyAccess = await propertyAccess.keys.fetchLast();
+    if (!keyAccess) throw new Error('No key access');
+    return keyAccess;
+  }
   /*
     decrypt the master key or the share key for a property
     Owner or share
@@ -170,20 +218,10 @@ export default class Keychain {
       const keyOwnerNode = await this.fetchOwnerKeyNode(property);
       return keyOwnerNode;
     }
-
-    const readAccess = await this.read.fetchById(authority.pub);
-    if (!readAccess) throw new Error('No read access');
-
-    const propertyAccess = await readAccess.properties.fetchById(property);
-    if (!propertyAccess) throw new Error('No property access');
-
-    const keyAccess = await propertyAccess.keys.fetchLast();
-    if (!keyAccess) throw new Error('No key access');
-
-    return keyAccess;
+    return await this.fetchSharedKeyNode(property);
   }
 
-  async createReadAccess(pair) {
+  async fetchOrCreateReadNode(pair) {
     // TODO: check priv and pub
     const user = pair.priv ? pair : await this.fetchUser(pair.pub);
     let readAccess = await this.read.fetchById(user.pub);

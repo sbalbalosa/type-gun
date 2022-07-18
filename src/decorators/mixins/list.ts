@@ -69,10 +69,10 @@ export default function listMixin(constructor) {
     const lastIndex = await this.listInstance().get('lastIndex').then();
 
     if (lastIndex === undefined || lastIndex === null) {
-      await this.listInstance().put({
-        lastIndex: 0,
-        ['0']: node
-      }).then();
+      await Promise.all([
+        this.listInstance().get('0').put(node).then(), 
+        this.listInstance().get('lastIndex').put(0).then()
+      ]);
       this.gunId = 0;
       return this;
     }
@@ -93,7 +93,7 @@ export default function listMixin(constructor) {
 
   // TODO: looks identical to set and map
   constructor.prototype.remove = async function() {
-    if (this.gunId && this.gunInstance()) {
+    if ((this.gunId !== undefined || this.gunId !== null) && this.gunInstance()) {
       await this.gunInstance().put(null).then();
       this.gunId = null;
       // TODO: clarify why uneset is not working

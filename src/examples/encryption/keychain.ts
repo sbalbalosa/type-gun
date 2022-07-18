@@ -9,6 +9,7 @@ await userCreate(user, 'test', 'Test1234');
 await userAuth(user, 'test', 'Test1234');
 
 const sharePair = await sea.pair();
+const anotherSharePair = await sea.pair();
 
 @root
 @keychain
@@ -25,10 +26,11 @@ class Person {
 
 const chain = await Keychain.create(user, Person);
 await chain.grantRead('sssNumber', sharePair);
-// await chain.revokeReadProperty('sssNumber', sharePair);
-// console.log(chain);
+await chain.grantRead('sssNumber', anotherSharePair);
+await chain.revokeRead('sssNumber', sharePair);
+console.log(chain);
 
-// const chain2 = await Keychain.create(user, Person);
-// await chain2.grantReadProperty('workNumber', sharePair);
-// console.log(chain2);
+const chain2 = await Keychain.create(user, Person);
+await chain2.grantRead('workNumber', sharePair);
+console.log(chain2);
 

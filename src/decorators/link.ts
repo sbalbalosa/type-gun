@@ -1,8 +1,8 @@
 export const linkMetadataKey = Symbol("link");
 
 
-export default function link(constructor, propertyKey) {
-  debugger;
+export default function link(target, propertyKey) {
+  const constructor = target.constructor || target;
   let metadata = Reflect.getMetadata(linkMetadataKey, constructor) || {};
   metadata = {
     ...metadata,
