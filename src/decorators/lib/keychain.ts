@@ -112,7 +112,7 @@ export default class Keychain {
         let sharedKeyNode = await sharedPropertyNode.keys.fetchLast();
         if (!sharedKeyNode) return;
         sharedKeyNode = Keys.create(sharedPropertyNode);
-        sharedKeyNode.key = await sea.encrypt(keyNode.key, await sea.secret(readNode.epub, authority));
+        sharedKeyNode.key = await sea.encrypt(randomKey, await sea.secret(readNode.epub, authority));
         await sharedKeyNode.save();
         await sharedKeyNode.connect('master', keyNode.childLink());
       });
@@ -235,6 +235,7 @@ export default class Keychain {
     if (!this.isAuthorityOwner()) throw new Error('Authority not owner');
     const authority = this.fetchAuthority();
     const keyNode = await this.fetchOwnerKeyNode(property);
+    ;
     const decryptedKey = await sea.decrypt(keyNode.key, authority);
     const result = await sea.encrypt(data, decryptedKey);
     if (!result) throw new Error('Could not encrypt data');
@@ -256,16 +257,19 @@ export default class Keychain {
         decryptedData = await sea.decrypt(data, key);
       } else {
         if (!this.epub) throw new Error('No owner epub');
+        await keyNode.query('master', Keys.childQuery);
         const masterKeyNode = await keyNode.master.fetch();
+        
+        // TODO check if masterKeyNode is the same with current
         const sharedKey = await sea.decrypt(keyNode.key, await sea.secret(this.epub, authority));
-        key = await sea.decrypt(masterKeyNode.key, sharedKey);
-        decryptedData = await sea.decrypt(data, key);
+        // key = await sea.decrypt(masterKeyNode.key, sharedKey);
+        decryptedData = await sea.decrypt(data, sharedKey);
       }
       if (decryptedData) return decryptedData;
       throw new Error('Could not decrypt data');
     });
     try {
-      await Promise.any(decryptPromises);
+      return await Promise.any(decryptPromises);
     } catch(e) {
       throw e;
     }

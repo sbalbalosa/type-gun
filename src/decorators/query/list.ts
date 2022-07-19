@@ -58,7 +58,8 @@ export default class ListQuery {
             if (finalKeyCount === 0) return instances;
 
             const promise = new Promise(resolve => {
-                this.listInstance().once().map().once((result, key) => {
+                this.listInstance().map().once((result, key) => {
+                    if (key === 'lastIndex') return;
                     if (keys[key]) finalKeyCount--;
                     if (result) {
                         const instance = this.target.create(this.parent);

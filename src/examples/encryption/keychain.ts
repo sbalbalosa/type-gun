@@ -28,9 +28,7 @@ const chain = await Keychain.create(user, Person);
 await chain.grantRead('sssNumber', sharePair);
 await chain.grantRead('sssNumber', anotherSharePair);
 await chain.revokeRead('sssNumber', sharePair);
-console.log(chain);
 
 const chain2 = await Keychain.create(user, Person);
 await chain2.grantRead('workNumber', sharePair);
-console.log(chain2);
 

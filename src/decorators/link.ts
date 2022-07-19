@@ -2,7 +2,7 @@ export const linkMetadataKey = Symbol("link");
 
 
 export default function link(target, propertyKey) {
-  const constructor = target.constructor || target;
+  const constructor = target?.name ? target : target.constructor;
   let metadata = Reflect.getMetadata(linkMetadataKey, constructor) || {};
   metadata = {
     ...metadata,

@@ -12,6 +12,8 @@ await userAuth(user, 'test', 'Test1234');
 
 const sharePair = await sea.pair();
 const noSharePair = await sea.pair();
+const anotherSharePair = await sea.pair();
+
 const testUserInstance = {
     _: {
         sea: sharePair
@@ -23,6 +25,12 @@ const noAccessUserInstance = {
         sea: noSharePair
     }
 };
+
+const anotherUserInstance = {
+    _: {
+        sea: anotherSharePair
+    }
+}
 
 @root
 @keychain
@@ -44,7 +52,8 @@ const chain = await Keychain.create(user, Person);
 
 await Promise.all([
     chain.grantRead('workNumber', sharePair),
-    chain.grantRead('sssNumber', sharePair)
+    chain.grantRead('sssNumber', sharePair),
+    chain.grantRead('sssNumber', anotherSharePair)
 ]);
 
 // TODO: grant multiple read property
@@ -57,15 +66,28 @@ person.workNumber = 345235234;
 person.email = 'test@test.com'
 await person.save();
 
-// const person1 = await Person.create(gun).unlock(testUserInstance);
-// await person1.sync();
-// console.log(person1);
 
-// await chain.revokeRead('sssNumber', sharePair);
+const person1 = await Person.create(gun)
+await person1.unlock(testUserInstance);
+await person1.sync();
+console.log(person1);
 
-// const person2 = await Person.create(gun).unlock(noAccessUserInstance);
-// await person2.sync();
-// console.log(person2);
+await chain.revokeRead('sssNumber', sharePair);
+await person1.sync();
+console.log(person1);
+
+person.sssNumber = 235235234;
+await person.save();
+
+const person2 = await Person.create(gun)
+await person2.unlock(noAccessUserInstance);
+await person2.sync();
+console.log(person2);
+
+const person3 = await Person.create(gun);
+await person3.unlock(anotherUserInstance);
+await person3.sync();
+console.log(person3);
 
 // const chain1 = await Keychain.create(user, Person);
 // await chain1.grantRead('email', sharePair);
