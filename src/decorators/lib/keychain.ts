@@ -73,10 +73,11 @@ export default class Keychain {
         const authority = this.fetchAuthority();
 
         const fields = getEncrypteds(this.targetConstructor);
-        const savePromise = fields.map(async (field) => {
+
+        const savePromise = async (field) => {
             const property = Properties.create(this, field);
 
-            await property.sync();
+            await property.sync(); // TODO: check if this is needed.
             const keyCount = await property.keys.length();
             if (keyCount > 0) return;
             property.name = field;
@@ -85,9 +86,12 @@ export default class Keychain {
             const randomKey = await generateRandomKey();
             key.key = await sea.encrypt(randomKey, authority);
             await key.save();
-        });
+        };
 
-        await Promise.all(savePromise);
+        for(const field of fields) {
+          await savePromise(field);
+        }
+
         return this;
   }
 

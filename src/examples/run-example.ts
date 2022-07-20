@@ -1,4 +1,5 @@
 // import './link/';
-import './encryption/';
+// import './encryption/';
+import './chat/single';
 
 window.localStorage.clear();

@@ -7,12 +7,19 @@ const user = getGun().user();
 const sea = getSea();
 const gun = getGun();
 
+
+console.time('auth');
 await userCreate(user, 'test', 'Test1234');
 await userAuth(user, 'test', 'Test1234');
+console.timeEnd('auth');
 
-const sharePair = await sea.pair();
-const noSharePair = await sea.pair();
-const anotherSharePair = await sea.pair();
+// const sharePair = await sea.pair();
+// const noSharePair = await sea.pair();
+// const anotherSharePair = await sea.pair();
+
+console.time('pair');
+const [sharePair, noSharePair, anotherSharePair] = await Promise.all([sea.pair(), sea.pair(), sea.pair()]);
+console.timeEnd('pair');
 
 const testUserInstance = {
     _: {
@@ -32,6 +39,7 @@ const anotherUserInstance = {
     }
 }
 
+console.time('class');
 @root
 @keychain
 class Person {
@@ -47,14 +55,21 @@ class Person {
     @field
     email?: string;
 }
+console.timeEnd('class');
 
+console.time('keychain');
 const chain = await Keychain.create(user, Person);
+console.timeEnd('keychain');
 
-await Promise.all([
-    chain.grantRead('workNumber', sharePair),
-    chain.grantRead('sssNumber', sharePair),
-    chain.grantRead('sssNumber', anotherSharePair)
-]);
+// await Promise.all([
+//     chain.grantRead('workNumber', sharePair),
+//     chain.grantRead('sssNumber', sharePair),
+//     chain.grantRead('sssNumber', anotherSharePair)
+// ]);
+
+await chain.grantRead('workNumber', sharePair);
+await chain.grantRead('sssNumber', sharePair);
+await chain.grantRead('sssNumber', anotherSharePair);
 
 // TODO: grant multiple read property
 // TODO: revoke multiple read property
@@ -88,6 +103,14 @@ const person3 = await Person.create(gun);
 await person3.unlock(anotherUserInstance);
 await person3.sync();
 console.log(person3);
+
+await chain.revokeRead('workNumber', sharePair);
+await person1.sync();
+console.log(person1);
+
+await chain.grantRead('sssNumber', sharePair);
+await person1.sync();
+console.log(person1);
 
 // const chain1 = await Keychain.create(user, Person);
 // await chain1.grantRead('email', sharePair);
