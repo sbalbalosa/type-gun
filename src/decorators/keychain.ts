@@ -1,8 +1,5 @@
-import { getSea } from "../helpers";
 import link from "./link";
 import Keychain from "./lib/keychain";
-
-const sea = getSea();
 
 export default function keychain(constructor: Function) {
   link(constructor, "keychain");
