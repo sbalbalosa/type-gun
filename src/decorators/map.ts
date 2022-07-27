@@ -12,7 +12,8 @@ export default function map(constructor: Function) {
   linkMixin(constructor);
   mapLinkMixin(constructor);
   
-  constructor.create = function(node, id) {
+  constructor.create = function(node, id: string) {
+    if (!id) throw new Error('id is required');
     const instance = new constructor();
     instance.initMapDefaults();
     instance.parentNode = node;
