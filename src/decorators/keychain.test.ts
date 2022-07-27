@@ -12,7 +12,6 @@ const mockAuthority = {
     test: 'test'
 };
 
-
 describe('keychain', () => {
     beforeEach(() => {
         Keychain.prototype.fetchAuthority = vi.fn(() => mockAuthority);
@@ -40,22 +39,113 @@ describe('keychain', () => {
         }).toThrowError('No authority set');
     });
 
-    it.skip('should attach a keychain', async () => {
+    it('should attach a keychain', async () => {
         const person = new Person();
+        person.connect = vi.fn(() => Promise.resolve());
+        const mockKeychain = {
+            userInstance: 'test',
+            childLink:  () => 'test',
+        }
 
-        const spy = vi.spyOn(person, 'initKeychainDefaults');
+        await person.attach(mockKeychain);
 
-        expect(spy).toHaveBeenCalledOnce();
+        expect(person.userInstance).toBe(mockKeychain.userInstance);
+        expect(person.connect).toBeCalledWith('keychain', mockKeychain.childLink());
     });
 
-    // it('should unlock the instance with a user', async () => {
-    // });
+    it('should not attach a keychain when there is no assigned user', async () => {
+        const person = new Person();
+        const mockKeychain = {
+            userInstance: undefined,
+            childLink:  () => 'test',
+        }
 
-    // it('should fetch keychain', async () => {});
+        await expect(person.attach(mockKeychain)).rejects.toThrowError('keychain has no user instance');
+    });
 
-    // it('should fetch property key', async () => {});
+    it('should assign a user instance to try to unlock a keychain', async () => {
+        const person = new Person();
+        person.query = vi.fn(() => Promise.resolve());
 
-    // it('should encrypt property', async () => {});
+        await person.unlock('test');
 
-    // it('should decrypt property', async () => {});
+        expect(person.userInstance).toBe('test');
+        expect(person.query).toBeCalledWith('keychain', Keychain.childQuery);
+    });
+
+    it('should fetch the keychain', async () => {
+        const person = new Person();
+        person.userInstance = 'testUserInstance';
+        let mockKeychain = {
+            userInstance: null,
+        }
+        person.keychain = {
+            fetch: vi.fn(() => Promise.resolve(mockKeychain)),
+        }
+
+        const keychain = await person.fetchKeychain();
+        expect(keychain.userInstance).toBe(person.userInstance);
+    });
+
+    it('should not fetch the keychain when it does not exist', async () => {
+        const person = new Person();
+        person.keychain = {
+            fetch: vi.fn(() => Promise.resolve(undefined)),
+        }
+
+        await expect(person.fetchKeychain()
+        ).rejects.toThrowError('No keychain');
+    });
+
+    it('should not fetch the keychain when instance does not have assigned user', async () => {
+        const person = new Person();
+        person.userInstance = undefined;
+        person.keychain = {
+            fetch: vi.fn(() => Promise.resolve(true)),
+        }
+
+        await expect(person.fetchKeychain()
+        ).rejects.toThrowError('No user instance');
+    });
+
+    it('should fetch property key', async () => {
+        const person = new Person();
+        person.fetchKeychain = vi.fn(() => Promise.resolve({
+            fetchPropertyKeyAccess: vi.fn(() => Promise.resolve('time')),
+        }));
+        
+        const key = await person.fetchPropertyKey('time');
+        expect(key).toBe('time');
+
+        person.fetchKeychain = vi.fn(() => Promise.resolve({
+            fetchPropertyKeyAccess: vi.fn(() => Promise.resolve(undefined)),
+        }));
+
+        await expect(person.fetchPropertyKey('time')).rejects.toThrowError('No property key');
+    });
+
+    it('should encrypt property', async () => {
+        const person = new Person();
+
+        const mockEncryptProperty = vi.fn(() => Promise.resolve('encrypted')); 
+        person.fetchKeychain = vi.fn(() => Promise.resolve({
+            encryptProperty: mockEncryptProperty,
+        }));
+        
+        const encrypted = await person.encryptProperty('time', 'test');
+        expect(mockEncryptProperty).toBeCalledWith('time', 'test');
+        expect(encrypted).toBe('encrypted');
+    });
+
+    it('should decrypt property', async () => {
+        const person = new Person();
+        const mockDecryptProperty = vi.fn(() => Promise.resolve('decrypted')); 
+        person.fetchKeychain = vi.fn(() => Promise.resolve({
+            decryptProperty: mockDecryptProperty,
+        }));
+        
+        const decrypted = await person.decryptProperty('time', 'test');
+        expect(mockDecryptProperty).toBeCalledWith('time', 'test');
+        expect(decrypted).toBe('decrypted');
+    });
 });
