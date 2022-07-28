@@ -1,11 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
-import 'reflect-metadata';
-import SingleQuery from './single';
 import { hydrateInstance } from '../field';
+import { setupEdges } from '../edge';
+import ChildQuery from './child';
 
 vi.mock('../field', () => {
     return {
-        hydrateInstance: vi.fn(() => true)
+        hydrateInstance: vi.fn((identity) => identity)
+    };
+});
+
+vi.mock('../edge', () => {
+    return {
+        setupEdges: vi.fn((identity) => identity)
     };
 });
 
@@ -18,33 +24,35 @@ const mockParent = {
     })
 };
 
-const mockTargetObject = { test: 'test' };
-const mockCreate = vi.fn(() => mockTargetObject);
-const mockTarget = {
-    name: 'test',
-    create: mockCreate
-};
+class MockClass {
+    gunId = null;
+    parentNode = null;
+    detached = null;
+}
 
-describe('query/single', () => {
+describe('query/child', () => {
     it('should have a gun instance', () => {
-        const query = new SingleQuery(mockParent, mockTarget);
+        const query = new ChildQuery(mockParent, MockClass);
         query.gunInstance();
-        expect(mockGetter).toHaveBeenCalledWith(mockTarget.name);
+        expect(mockGetter).toHaveBeenCalledWith(MockClass.name.toLowerCase());
     });
 
     it('should throw error when parent does not gun instance', () => {
         const mockParent = {
             gunInstance: () => null
         };
-        const query = new SingleQuery(mockParent, mockTarget);
+        const query = new ChildQuery(mockParent, MockClass);
         expect(() => { query.gunInstance() }).toThrowError('No parent instance');
     });
 
     it('should fetch a single node', async () => {
-        const query = new SingleQuery(mockParent, mockTarget);
+        const query = new ChildQuery(mockParent, MockClass);
         const instance = await query.fetch();
-        expect(hydrateInstance).toBeCalledWith(mockTargetObject, true);
-        expect(instance).toBe(true);
+        expect(instance).toBeInstanceOf(MockClass);
+        expect(instance.gunId).toBe(MockClass.name.toLowerCase());
+        expect(instance.detached).toBe(true);
+        expect(hydrateInstance).toBeCalledWith(instance, true);
+        expect(setupEdges).toBeCalledWith(instance);
     });
 
     it('should not fetch a node when it does not exist in gun', async () => {
@@ -55,7 +63,7 @@ describe('query/single', () => {
                 })
             })
         };
-        const query = new SingleQuery(mockParent, mockTarget);
+        const query = new ChildQuery(mockParent, MockClass);
         const instance = await query.fetch();
         expect(instance).toBe(null);
     });
