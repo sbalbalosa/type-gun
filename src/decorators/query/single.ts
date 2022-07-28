@@ -3,7 +3,7 @@ export default class SingleQuery {
     parent = null;
     target = null;
     name = null;
-    constructor(parent, target, name) {
+    constructor(parent, target, name?: string) {
         this.parent = parent;
         this.target = target;
         this.name = name ? name : this.target.name.toLowerCase();
@@ -19,10 +19,9 @@ export default class SingleQuery {
     async fetch() {
         if (this.gunInstance()) {
             const result = await this.gunInstance().then();
+            if (!result) return null;
             const instance = this.target.create(this.parent);
-            if (result) return hydrateInstance(instance, result);
-            return null;
+            return hydrateInstance(instance, result);
         }
-        throw new Error('No parent instance');
     }
 }
