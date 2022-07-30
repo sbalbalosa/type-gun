@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import 'reflect-metadata';
 import SingleQuery from './single';
 import { hydrateInstance } from '../field';
 

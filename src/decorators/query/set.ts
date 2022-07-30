@@ -4,7 +4,7 @@ export default class SetQuery {
     parent = null;
     target = null;
     name = null;
-    constructor(parent, target, name) {
+    constructor(parent, target, name?: string) {
         this.parent = parent;
         this.target = target;
         this.name = name ? name : this.target.name.toLowerCase();
@@ -18,44 +18,35 @@ export default class SetQuery {
     }
 
     async fetchKeys() {
-        if (this.setInstance()) {
-            return (await this.setInstance().then()) ?? {};
-        }
-        throw new Error('No set instance');
+        return (await this.setInstance().then()) ?? {};
     }
 
     async fetchById(id: string) {
-        if (this.setInstance()) {
-            const result = await this.setInstance().get(id).then();
-            const instance = this.target.create(this.parent);
-            instance.gunId = result['_']['#'];
-            if (result) return hydrateInstance(instance, result);
-            return null;
-        }
-        throw new Error('No set instance');
+        const result = await this.setInstance().get(id).then();
+        if (!result) return null;
+        const instance = this.target.create(this.parent);
+        instance.gunId = result['_']['#'];
+        return hydrateInstance(instance, result);
     }
 
     async fetchAll() {
-        if (this.setInstance()) {
-            const keys = await this.fetchKeys();
-            let keyCount = Object.keys(removeProperty(keys, '_')).length;
-            const instances = [];
+        const keys = await this.fetchKeys();
+        let keyCount = Object.keys(removeProperty(keys, '_')).length;
+        const instances = [];
 
-            if (keyCount === 0) return instances;
+        if (keyCount === 0) return instances;
 
-            const promise = new Promise(resolve => {
-                this.setInstance().once().map().once((result, key) => {
-                    if (keys[key]) keyCount--;
-                    if (result) {
-                        const instance = this.target.create(this.parent);
-                        instance.gunId = key;
-                        instances.push(hydrateInstance(instance, result));
-                    }
-                    if (keyCount === 0) resolve(instances);
-                });
+        const promise = new Promise(resolve => {
+            this.setInstance().once().map().once((result, key) => {
+                if (keys[key]) keyCount--;
+                if (result) {
+                    const instance = this.target.create(this.parent);
+                    instance.gunId = key;
+                    instances.push(hydrateInstance(instance, result));
+                }
+                if (keyCount === 0) resolve(instances);
             });
-            return await promise;
-        }
-        throw new Error('No set instance');
+        });
+        return await promise;
     }
 }
