@@ -5,7 +5,7 @@ export default class MapQuery {
     parent = null;
     target = null;
     name = null;
-    constructor(parent, target, name) {
+    constructor(parent, target, name?: string) {
         this.parent = parent;
         this.target = target;
         this.name = name ? name : this.target.name.toLowerCase();

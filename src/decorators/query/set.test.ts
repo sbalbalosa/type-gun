@@ -41,6 +41,14 @@ describe('query/set', () => {
         expect(mockGetter).toHaveBeenCalledWith(MockClass.name.toLowerCase());
     });
 
+    it('should have a gun instance with a custom name', () => {
+        const query = new SetQuery(mockParent, MockClass, 'custom');
+
+        query.setInstance();
+
+        expect(mockGetter).toHaveBeenCalledWith('custom');
+    });
+
     it('should throw error when parent does not gun instance', () => {
         const mockParent = {
             gunInstance: () => null
