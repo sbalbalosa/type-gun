@@ -1,6 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import { hydrateInstance } from '../field';
-import { setupEdges } from '../edge';
 import SetQuery from './set';
 
 vi.mock('../field', () => {
@@ -29,12 +27,8 @@ class MockClass {
     parentNode = null;
     detached = null;
 
-    static create(parent) {
-        return {
-            '_': {
-                '#': 'souldid'
-            }
-        }
+    static create() {
+        return new MockClass();
     }
 }
 
@@ -63,36 +57,85 @@ describe('query/set', () => {
         const mockParent = {
             gunInstance: () => ({
                 get: () => ({
-                    then: () => Promise.resolve({ test: 'test' })
+                    get: () => Promise.resolve({ test: 'test', _: { '#': 'soulid' } })
                 })
             })
         };
         const query = new SetQuery(mockParent, MockClass);
         const instance = await query.fetchById('souldid');
         expect(instance).toBeInstanceOf(MockClass);
-        expect(instance.gunId).toEqual('souldid');
+        expect(instance.gunId).toBe('soulid');
     });
 
-    // it('should fetch a single node', async () => {
-    //     const query = new ChildQuery(mockParent, MockClass);
-    //     const instance = await query.fetch();
-    //     expect(instance).toBeInstanceOf(MockClass);
-    //     expect(instance.gunId).toBe(MockClass.name.toLowerCase());
-    //     expect(instance.detached).toBe(true);
-    //     expect(hydrateInstance).toBeCalledWith(instance, true);
-    //     expect(setupEdges).toBeCalledWith(instance);
-    // });
+    it('should not fetch a record if it does not exist in gun', async () => {
+        const mockParent = {
+            gunInstance: () => ({
+                get: () => ({
+                    get: () => Promise.resolve(null)
+                })
+            })
+        };
+        const query = new SetQuery(mockParent, MockClass);
+        const result = await query.fetchById('test');
+        expect(result).toBe(null);
+    });
 
-    // it('should not fetch a node when it does not exist in gun', async () => {
-    //     const mockParent = {
-    //         gunInstance: () => ({
-    //             get: () => ({
-    //                 then: () => Promise.resolve(null)
-    //             })
-    //         })
-    //     };
-    //     const query = new ChildQuery(mockParent, MockClass);
-    //     const instance = await query.fetch();
-    //     expect(instance).toBe(null);
-    // });
+    it('should fetch all records', async () => {
+        const mockGunResults = [
+            {
+                test: 'test1',
+                _: {
+                    '#': 'test1'
+                }
+            },
+            {
+                test: 'test2',
+                _: {
+                    '#': 'test2'
+                }
+            }
+        ];
+
+        class MockClass {
+            gunId = null;
+            parentNode = null;
+            detached = null;
+
+            static create() {
+                return new MockClass();
+            }
+        }
+
+        const query = new SetQuery(mockParent, MockClass);
+        query.fetchKeys = () => Promise.resolve({
+            test1: {},
+            test2: {}
+        })
+        query.setInstance = () => {
+            return {
+                once: () => ({
+                    map: () => ({
+                        once: (fn) => {
+                            mockGunResults.forEach((result) => {
+                                fn(result, result['_']['#']);
+                            })
+                        }
+                    })
+                })
+            }
+        };
+        const results = await query.fetchAll();
+
+        results.forEach((result) => {
+            expect(result).toBeInstanceOf(MockClass);
+            expect(mockGunResults.some((x) => x._['#'] === result.gunId)).toBe(true);
+        });
+    });
+
+    it('should not fetch records if it does not exist in gun', async () => {
+        const query = new SetQuery(mockParent, MockClass);
+        query.fetchKeys = () => Promise.resolve({});
+        const results = await query.fetchAll();
+        expect(results.length).toBe(0);
+    });
 });
