@@ -35,7 +35,9 @@ class MockClass {
 describe('query/set', () => {
     it('should have a gun instance', () => {
         const query = new SetQuery(mockParent, MockClass);
+
         query.setInstance();
+
         expect(mockGetter).toHaveBeenCalledWith(MockClass.name.toLowerCase());
     });
 
@@ -43,13 +45,17 @@ describe('query/set', () => {
         const mockParent = {
             gunInstance: () => null
         };
+
         const query = new SetQuery(mockParent, MockClass);
+
         expect(() => { query.setInstance() }).toThrowError('No parent instance');
     });
 
     it('should fetch keys from a set', async () => {
         const query = new SetQuery(mockParent, MockClass);
+
         const keys = await query.fetchKeys();
+
         expect(keys).toEqual({ test: 'test' });
     });
 
@@ -62,7 +68,9 @@ describe('query/set', () => {
             })
         };
         const query = new SetQuery(mockParent, MockClass);
+
         const instance = await query.fetchById('souldid');
+
         expect(instance).toBeInstanceOf(MockClass);
         expect(instance.gunId).toBe('soulid');
     });
@@ -76,7 +84,9 @@ describe('query/set', () => {
             })
         };
         const query = new SetQuery(mockParent, MockClass);
+
         const result = await query.fetchById('test');
+
         expect(result).toBe(null);
     });
 
@@ -95,17 +105,14 @@ describe('query/set', () => {
                 }
             }
         ];
-
         class MockClass {
             gunId = null;
             parentNode = null;
             detached = null;
-
             static create() {
                 return new MockClass();
             }
         }
-
         const query = new SetQuery(mockParent, MockClass);
         query.fetchKeys = () => Promise.resolve({
             test1: {},
@@ -124,6 +131,7 @@ describe('query/set', () => {
                 })
             }
         };
+
         const results = await query.fetchAll();
 
         results.forEach((result) => {
