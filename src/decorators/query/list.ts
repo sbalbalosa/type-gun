@@ -4,7 +4,7 @@ export default class ListQuery {
     parent = null;
     target = null;
     name = null;
-    constructor(parent, target, name) {
+    constructor(parent, target, name?: string) {
         this.parent = parent;
         this.target = target;
         this.name = name ? name : this.target.name.toLowerCase();
@@ -28,23 +28,17 @@ export default class ListQuery {
     }
 
     private async fetchKeys() {
-        if (this.listInstance()) {
-            const keys = (await this.listInstance().then()) ?? {};
-            const { lastIndex, ...rest} = keys;
-            return rest;
-        }
-        throw new Error('No list instance');
+        const keys = (await this.listInstance().then()) ?? {};
+        const { lastIndex, ...rest} = keys;
+        return rest;
     }
 
     async fetchById(id: number) {
-        if (this.listInstance()) {
-            const result = await this.listInstance().get(`${id}`).then();
-            const instance = this.target.create(this.parent);
-            instance.gunId = id;
-            if (result) return hydrateInstance(instance, result);
-            return null;
-        }
-        throw new Error('No map instance');
+        const result = await this.listInstance().get(`${id}`).then();
+        if (!result) return null;
+        const instance = this.target.create(this.parent);
+        instance.gunId = id;
+        return hydrateInstance(instance, result);
     }
 
     async fetchAll() {
