@@ -113,14 +113,7 @@ describe('query/set', () => {
                 }
             }
         ];
-        class MockClass {
-            gunId = null;
-            parentNode = null;
-            detached = null;
-            static create() {
-                return new MockClass();
-            }
-        }
+        
         const query = new SetQuery(mockParent, MockClass);
         query.fetchKeys = () => Promise.resolve({
             test1: {},
