@@ -96,53 +96,143 @@ describe('query/list', () => {
     });
 
 
-    // it('should fetch all records', async () => {
-    //     const mockGunResults = [
-    //         {
-    //             test: 'test1',
-    //             _: {
-    //                 '#': 'test1'
-    //             }
-    //         },
-    //         {
-    //             test: 'test2',
-    //             _: {
-    //                 '#': 'test2'
-    //             }
-    //         }
-    //     ];
+    it('should fetch all records', async () => {
+        const mockGunResults = [
+            {
+                test: 'test1',
+                _: {
+                    '#': '0'
+                }
+            },
+            {
+                test: 'test2',
+                _: {
+                    '#': '1'
+                }
+            }
+        ];
         
-    //     const query = new ListQuery(mockParent, MockClass);
-    //     query.fetchKeys = () => Promise.resolve({
-    //         test1: {},
-    //         test2: {}
-    //     })
-    //     query.setInstance = () => {
-    //         return {
-    //             once: () => ({
-    //                 map: () => ({
-    //                     once: (fn) => {
-    //                         mockGunResults.forEach((result) => {
-    //                             fn(result, result['_']['#']);
-    //                         })
-    //                     }
-    //                 })
-    //             })
-    //         }
-    //     };
+        const query = new ListQuery(mockParent, MockClass);
+        query.fetchKeys = () => Promise.resolve({
+            '0': {},
+            '1': {}
+        })
+        query.listInstance = () => {
+            return {
+                map: () => ({
+                    once: (fn) => {
+                        mockGunResults.forEach((result) => {
+                            fn(result, result['_']['#']);
+                        })
+                    }
+                })
+            }
+        };
 
-    //     const results = await query.fetchAll();
+        const results = await query.fetchAll();
 
-    //     results.forEach((result) => {
-    //         expect(result).toBeInstanceOf(MockClass);
-    //         expect(mockGunResults.some((x) => x._['#'] === result.gunId)).toBe(true);
-    //     });
-    // });
+        results.forEach((result) => {
+            expect(result).toBeInstanceOf(MockClass);
+            expect(mockGunResults.some((x) => x._['#'] === result.gunId)).toBe(true);
+        });
+    });
 
-    // it('should not fetch records if it does not exist in gun', async () => {
-    //     const query = new ListQuery(mockParent, MockClass);
-    //     query.fetchKeys = () => Promise.resolve({});
-    //     const results = await query.fetchAll();
-    //     expect(results.length).toBe(0);
-    // });
+    it('should fetch last index of the list', async () => {
+        const query = new ListQuery(mockParent, MockClass);
+        const mockGet = vi.fn(() => {
+            return {
+                then: () => Promise.resolve(5)
+            }
+        });
+        query.listInstance = () => {
+            return {
+                get: mockGet 
+            }
+        };
+
+        const index = await query.fetchLastIndex();
+        
+        expect(index).toBe(5);
+        expect(mockGet).toBeCalledWith('lastIndex');
+    });
+
+    it('should fetch the current number of existing records', async () => {
+        const query = new ListQuery(mockParent, MockClass);
+        query.fetchKeys = () => Promise.resolve({
+            '0': {},
+            '1': {},
+            '2': null,
+            '3': {}
+        });
+
+        const length = await query.length();
+
+        expect(length).toBe(3);
+    });
+    
+    it('should fetch the next adjacent node', async () => {
+        const query = new ListQuery(mockParent, MockClass);
+        query.fetchLastIndex = () => Promise.resolve(3);
+        query.fetchById = vi.fn((id) => {
+            if (id === 2) return { gunId: 2 };
+            return null;
+        });
+
+        const node = await query.fetchNext({ gunId: 1 });
+
+        expect(query.fetchById).toHaveBeenCalledOnce();
+        expect(node.gunId).toBe(2);
+    });
+
+    it('should not fetch the next adjacent node if the current node is the last record', async () => {
+        const query = new ListQuery(mockParent, MockClass);
+        query.fetchLastIndex = () => Promise.resolve(3);
+
+        await expect(query.fetchNext({ gunId: 3 })).rejects.toThrowError('No next node');
+    });
+
+    it('should fetch the previous adjacent node', async () => {
+        const query = new ListQuery(mockParent, MockClass);
+        query.fetchLastIndex = () => Promise.resolve(3);
+        query.fetchById = vi.fn((id) => {
+            if (id === 1) return { gunId: 1 };
+            return null;
+        });
+
+        const node = await query.fetchPrevious({ gunId: 2 });
+
+        expect(query.fetchById).toHaveBeenCalledOnce();
+        expect(node.gunId).toBe(1);
+    });
+
+    it('should not fetch the previous adjacent node', async () => {
+        const query = new ListQuery(mockParent, MockClass);
+
+        await expect(query.fetchPrevious({ gunId: 0 })).rejects.toThrowError('No previous node');
+    });
+
+    it('should fetch the first record', async () => {
+        const query = new ListQuery(mockParent, MockClass);
+        query.fetchById = vi.fn(() => Promise.resolve({ test: 'test'}));
+
+        const result = await query.fetchFirst();
+
+        expect(result).toEqual({
+            test: 'test'
+        });
+        expect(query.fetchById).toBeCalledWith(0);
+    });
+
+    it('should fetch the last record', async () => {
+        const query = new ListQuery(mockParent, MockClass);
+        query.fetchLastIndex = () => Promise.resolve(3)
+        query.fetchById = vi.fn(() => Promise.resolve({ test: 'test'}));
+
+        const result = await query.fetchLast();
+
+        expect(result).toEqual({
+            test: 'test'
+        });
+        expect(query.fetchById).toBeCalledWith(3);
+    });
 });

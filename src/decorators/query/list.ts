@@ -83,7 +83,6 @@ export default class ListQuery {
     }
 
     async fetchNext(node) {
-        if (!node.gunId && node.gunId !== 0) throw new Error('Node has no index');
         const lastIndex = await this.fetchLastIndex();
         if (node.gunId === lastIndex) throw new Error('No next node');
 
@@ -99,7 +98,6 @@ export default class ListQuery {
     }
 
     async fetchPrevious(node) {
-        if (!node.gunId && node.gunId !== 0) throw new Error('Node has no index');
         if (node.gunId === 0) throw new Error('No previous node');
         
 
