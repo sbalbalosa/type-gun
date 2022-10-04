@@ -1,41 +1,41 @@
 // NOTE: SEA certify example
-// import { userCreate, userAuth, getGun, getSea } from "../helpers";
+import { userCreate, userAuth, getGun, getSea } from "../helpers";
 
-// const gun = getGun();
-// const user = gun.user();
-// const sea = getSea();
+const gun = getGun();
+const user = gun.user();
+const sea = getSea();
 
-// const kobe = await sea.pair();
-// const jordan = await sea.pair();
-// const lebron = await sea.pair();
+const kobe = await sea.pair();
+const jordan = await sea.pair();
+const lebron = await sea.pair();
 
-// const cert = await sea.certify(kobe.pub, {"#": {"*": "inbox"}}, jordan, null, { expiry: Date.now() + (60*60*24*1000) });
+const cert = await sea.certify(kobe.pub,  {"=":"inbox"}, jordan, null, { expiry: Date.now() + (60*60*24*1000) });
 
-// await gun.get('root').get('cert').put(cert).then();
+await gun.get('root').get('cert').put(cert).then();
 
-// user.auth(jordan, async () => {
-//     await user.get('inbox').get('message').get('chat').put('I am the goat').then();
-//     user.leave();
+user.auth(jordan, async () => {
+    await user.get('inbox').get('message').get('chat').put('I am the goat').then();
+    user.leave();
 
-//     user.auth(kobe, async () => {
-//         await gun.user(jordan.pub).get('inbox').get('message').get('chat').put('No, I am the goat', null, { opt: { cert }}).then();
-//         user.leave();
+    user.auth(kobe, async () => {
+        await gun.user(jordan.pub).get('inbox').get('message').get('chat').put('No, I am the goat', null, { opt: { cert }}).then();
+        user.leave();
 
-//         window.setTimeout(() => {
-//             user.auth(lebron, async () => {
-//                 gun.user(jordan.pub).get('inbox').get('message').get('chat').put('Lebron is the goat', () => {
-//                     debugger;
-//                 }, { opt: { cert }});
-//                 user.leave();
+        window.setTimeout(() => {
+            user.auth(lebron, async () => {
+                gun.user(jordan.pub).get('inbox').get('message').get('chat').put('Lebron is the goat', () => {
+                    debugger;
+                }, { opt: { cert }});
+                user.leave();
             
-//                 window.setTimeout(() => {
-//                     window.localStorage.clear();
-//                 }, 1000);
-//             });
-//         }, 3000);
+                window.setTimeout(() => {
+                    window.localStorage.clear();
+                }, 1000);
+            });
+        }, 3000);
 
-//     })
-// })
+    })
+})
 
 // await userCreate(user, 'test', 'Test1234');
 // await userAuth(user, 'test', 'Test1234');
