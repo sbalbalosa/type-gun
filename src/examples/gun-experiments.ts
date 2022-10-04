@@ -9,33 +9,52 @@ const kobe = await sea.pair();
 const jordan = await sea.pair();
 const lebron = await sea.pair();
 
-const cert = await sea.certify(kobe.pub,  {"=":"inbox"}, jordan, null, { expiry: Date.now() + (60*60*24*1000) });
+// const policy = {"#": {"*": "inbox"}, ".": {"=": "chat"}};
+const policy = {"#": {"*": "inbox"}, ".": {"=": "message", ".": {"=": "chat"}}};
+
+const cert = await sea.certify(kobe.pub, policy, jordan, null, { expiry: Date.now() + (60*60*24*1000) });
 
 await gun.get('root').get('cert').put(cert).then();
 
-user.auth(jordan, async () => {
-    await user.get('inbox').get('message').get('chat').put('I am the goat').then();
-    user.leave();
+try {
+        user.auth(jordan, async () => {
+            const constantText = 'constant';
+            await user.get('inbox').get('message').get('chat').put('I am the goat').then();
+            await user.get('inbox').get('message').get('meta').put(constantText).then();
+            user.leave();
 
-    user.auth(kobe, async () => {
-        await gun.user(jordan.pub).get('inbox').get('message').get('chat').put('No, I am the goat', null, { opt: { cert }}).then();
-        user.leave();
+            user.auth(kobe, async () => {
+                const textToMatch = "No, I am the goat";
+                await gun.user(jordan.pub).get('inbox').get('message').get('chat').put(textToMatch, null, { opt: { cert }}).then();
+                const node = await gun.user(jordan.pub).get('inbox').get('message').get('chat').then();
+                console.log(node);
+                if (textToMatch !== node) throw new Error("Couldn't write");
 
-        window.setTimeout(() => {
-            user.auth(lebron, async () => {
-                gun.user(jordan.pub).get('inbox').get('message').get('chat').put('Lebron is the goat', () => {
-                    debugger;
-                }, { opt: { cert }});
+                await gun.user(jordan.pub).get('inbox').get('message').get('meta').put(constantText, null, { opt: { cert }}).then();
+                const node1 = await gun.user(jordan.pub).get('inbox').get('message').get('meta').then();
+                if (node1 !== constantText) throw new Error("Shouldn't overwrite");
                 user.leave();
-            
-                window.setTimeout(() => {
-                    window.localStorage.clear();
-                }, 1000);
-            });
-        }, 3000);
 
-    })
-})
+                window.setTimeout(() => {
+                    user.auth(lebron, async () => {
+                        gun.user(jordan.pub).get('inbox').get('message').get('chat').put('Lebron is the goat', () => {
+                        }, { opt: { cert }});
+                        user.leave();
+                    
+                        // window.setTimeout(() => {
+                        //     window.localStorage.clear();
+                        // }, 1000);
+                    });
+                }, 3000);
+
+            })
+        })
+    }
+    catch(e) {
+                        window.setTimeout(() => {
+                            window.localStorage.clear();
+                        }, 1000);
+    }
 
 // await userCreate(user, 'test', 'Test1234');
 // await userAuth(user, 'test', 'Test1234');
