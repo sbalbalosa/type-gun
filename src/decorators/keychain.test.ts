@@ -4,6 +4,8 @@ import 'reflect-metadata';
 import keychain from './keychain';
 import Keychain from './lib/keychain';
 
+vi.stubGlobal('sea', {});
+
 @keychain
 class Person {
   time?: string;

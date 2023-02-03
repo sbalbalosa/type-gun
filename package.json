@@ -11,12 +11,12 @@
   },
   "devDependencies": {
     "happy-dom": "^6.0.4",
-    "typescript": "^4.5.4",
     "vite": "^2.9.9",
     "vitest": "^0.18.1"
   },
   "dependencies": {
     "gun": "^0.2020.1237",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "typescript": "^5.0.0-beta"
   }
 }
