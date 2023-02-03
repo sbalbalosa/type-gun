@@ -1,24 +1,25 @@
-export const getGlobal = function () {
-  if (typeof self !== "undefined") {
-    return self;
-  }
-  if (typeof window !== "undefined") {
-    return window;
-  }
-  if (typeof global !== "undefined") {
-    return global;
-  }
-  throw new Error("unable to locate global object");
+import { IGunUserInstance } from "gun";
+import { GlobalMetaData } from "./types";
+
+type Global = GlobalMetaData<typeof globalThis>;
+
+export const getGlobal = function (): Global {
+  const global = globalThis as Global;
+  global.gun = null;
+  global.sea = null;
+  return global;
 };
 
 export const getGun = function () {
   const global = getGlobal();
-  return global.typeGunInstance;
+  if (global.gun) return global.gun;
+  throw new Error('Gun instance does not exist');
 };
 
 export const getSea = function() {
   const global = getGlobal();
-  return global.typeGunSeaInstance;
+  if (global.sea) return global.sea;
+  throw new Error('SEA instance does not exist');
 }
 
 export const generateRandomKey = async function() {
@@ -32,20 +33,22 @@ export const removeProperty = (obj, id) => {
   return rest;
 }
 
-export function userCreate(userNode, username, password) {
+export function userCreate(userNode: IGunUserInstance, username: string, password: string) {
   const createPromise = new Promise((resolve, reject) => {
       userNode.create(username, password, (ack) => {
-          if (ack.err) reject(new Error(ack.err));
+          if ('err' in ack) {
+            reject(new Error(ack.err));
+          }
           resolve(true);
       });
   });
   return createPromise;
 }
 
-export function userAuth(userNode, username, password) {
+export function userAuth(userNode: IGunUserInstance, username: string, password: string) {
   const authPromise = new Promise((resolve, reject) => {
       userNode.auth(username, password, (ack) => {
-          if (ack.err) reject(new Error(ack.err));
+          if ('err' in ack) reject(new Error(ack.err));
           resolve(true);
       });
   });
@@ -53,12 +56,13 @@ export function userAuth(userNode, username, password) {
 }
 
 
-export function userChangePassword(userNode, username, password, newPassword) {
+export function userChangePassword(userNode: IGunUserInstance, username: string, password: string, newPassword: string) {
   const authPromise = new Promise((resolve, reject) => {
       userNode.auth(username, password, (ack) => {
-          if (ack.err) reject(new Error(ack.err));
+          if ('err' in ack) reject(new Error(ack.err));
           resolve(true);
-      }, { change: newPassword });
+          // TODO: Workaround because change type is 'newPassword' literal.
+      }, { change: newPassword as 'newPassword' });
   });
   return authPromise;
 }

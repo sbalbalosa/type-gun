@@ -11,8 +11,6 @@ import Properties from './properties';
 import Keys from './keys';
 import { getEncrypteds } from '../encrypted';
 
-const sea = getSea();
-
 @baseMixin
 @linkMixin
 @mapMixin
@@ -32,6 +30,15 @@ export default class Keychain {
 
     userInstance?: null;
     targetConstructor?: null;
+    #sea: ReturnType<typeof getSea>;
+
+    constructor() {
+      const sea = getSea();
+      if (!sea) {
+        throw new Error('Could not create keychain without SEA');
+      }
+      this.#sea = sea;
+    }
 
     static async create(userNode, constructor) {
         const fetchAuthority = Keychain.prototype.fetchAuthority.bind({
@@ -84,7 +91,7 @@ export default class Keychain {
             await property.save();
             const key = Keys.create(property);
             const randomKey = await generateRandomKey();
-            key.key = await sea.encrypt(randomKey, authority);
+            key.key = await this.#sea.encrypt(randomKey, authority);
             await key.save();
         };
 
@@ -104,7 +111,7 @@ export default class Keychain {
     if (!keyNode) throw new Error('No key node');
     keyNode = Keys.create(propertyNode);
     const randomKey = await generateRandomKey();
-    keyNode.key = await sea.encrypt(randomKey, authority);
+    keyNode.key = await this.#sea.encrypt(randomKey, authority);
     await keyNode.save();
 
     const readNodesLookup = await this.read?.fetchAll();
@@ -116,7 +123,7 @@ export default class Keychain {
         let sharedKeyNode = await sharedPropertyNode.keys.fetchLast();
         if (!sharedKeyNode) return;
         sharedKeyNode = Keys.create(sharedPropertyNode);
-        sharedKeyNode.key = await sea.encrypt(randomKey, await sea.secret(readNode.epub, authority));
+        sharedKeyNode.key = await this.#sea.encrypt(randomKey, await this.#sea.secret(readNode.epub, authority));
         await sharedKeyNode.save();
         await sharedKeyNode.connect('master', keyNode.childLink());
       });
@@ -183,8 +190,8 @@ export default class Keychain {
     if (!sharedKeyAccess) {
       sharedKeyAccess = Keys.create(propertyAccess);
     }
-    const masterKey = await sea.decrypt(ownerKeyAccess.key, authority);
-    sharedKeyAccess.key = await sea.encrypt(masterKey, await sea.secret(pair.epub, authority)); // TODO: create a helper method
+    const masterKey = await this.#sea.decrypt(ownerKeyAccess.key, authority);
+    sharedKeyAccess.key = await this.#sea.encrypt(masterKey, await this.#sea.secret(pair.epub, authority)); // TODO: create a helper method
     await sharedKeyAccess.save();
     await sharedKeyAccess.connect('master', ownerKeyAccess.childLink());
     return sharedKeyAccess;
@@ -240,8 +247,8 @@ export default class Keychain {
     const authority = this.fetchAuthority();
     const keyNode = await this.fetchOwnerKeyNode(property);
     ;
-    const decryptedKey = await sea.decrypt(keyNode.key, authority);
-    const result = await sea.encrypt(data, decryptedKey);
+    const decryptedKey = await this.#sea.decrypt(keyNode.key, authority);
+    const result = await this.#sea.encrypt(data, decryptedKey);
     if (!result) throw new Error('Could not encrypt data');
     return result;
   }
@@ -257,17 +264,17 @@ export default class Keychain {
       let key;
       let decryptedData
       if (this.isAuthorityOwner()) {
-        key = await sea.decrypt(keyNode.key, authority);
-        decryptedData = await sea.decrypt(data, key);
+        key = await this.#sea.decrypt(keyNode.key, authority);
+        decryptedData = await this.#sea.decrypt(data, key);
       } else {
         if (!this.epub) throw new Error('No owner epub');
         await keyNode.query('master', Keys.childQuery);
         const masterKeyNode = await keyNode.master.fetch();
         
         // TODO check if masterKeyNode is the same with current
-        const sharedKey = await sea.decrypt(keyNode.key, await sea.secret(this.epub, authority));
+        const sharedKey = await this.#sea.decrypt(keyNode.key, await this.#sea.secret(this.epub, authority));
         // key = await sea.decrypt(masterKeyNode.key, sharedKey);
-        decryptedData = await sea.decrypt(data, sharedKey);
+        decryptedData = await this.#sea.decrypt(data, sharedKey);
       }
       if (decryptedData) return decryptedData;
       throw new Error('Could not decrypt data');

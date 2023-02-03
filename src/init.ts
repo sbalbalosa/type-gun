@@ -7,10 +7,8 @@ import "reflect-metadata";
 import { getGlobal } from "./helpers";
 
 const global = getGlobal();
-
-const gun = global.typeGunInstance || Gun([]);
-
+const gun = global.gun || Gun([]);
 const sea = Gun.SEA;
 
-global.typeGunInstance = gun;
-global.typeGunSeaInstance = sea;
+global.gun = gun;
+global.sea = sea;
