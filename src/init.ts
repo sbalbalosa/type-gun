@@ -1,4 +1,5 @@
 import Gun from "gun";
+import "gun/sea";
 import "gun/lib/then.js";
 import "gun/lib/unset.js";
 import "reflect-metadata";
@@ -6,7 +7,8 @@ import "reflect-metadata";
 import { getGlobal } from "./helpers";
 
 const global = getGlobal();
+const gun = global.gun || Gun([]);
+const sea = Gun.SEA;
 
-const gun = global.typeGunInstance || Gun([]);
-
-global.typeGunInstance = gun;
+global.gun = gun;
+global.sea = sea;

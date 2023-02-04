@@ -1,24 +1,21 @@
 import { IGunInstance } from "gun";
+import singleMixin from "./mixins/single";
+import baseMixin from "./mixins/base";
+import linkMixin from "./mixins/link";
+import { setupEdges } from "./edge";
 
-import setupMethods from "./setupMethods";
+export default function root(constructor: Function) {
+  baseMixin(constructor);
+  singleMixin(constructor);
+  linkMixin(constructor);
 
-export default function root(
-  gunInstance: IGunInstance<any>,
-  name: string = "root"
-) {
-  return function (constructor: Function) {
-    constructor.getParentNode = function () {
-      return gunInstance.get(name);
+  constructor.create = function(gunInstance: IGunInstance<any>, name = 'root') {
+    const instance = new constructor();
+    instance.initSingleDefaults();
+    instance.gunId = constructor.name.toLowerCase();
+    instance.parentNode = {
+      gunInstance: () => gunInstance.get(name),
     };
-
-    constructor.getParentPath = function () {
-      return name;
-    };
-
-    setupMethods(constructor);
-
-    constructor.getPath = function () {
-      return `${name}/${constructor.getName()}`;
-    };
-  };
-}
+    return setupEdges(instance);
+  }
+};
