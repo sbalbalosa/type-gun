@@ -1,12 +1,13 @@
-import { IGunUserInstance } from "gun";
-import { GlobalMetaData } from "./types";
+import { IGunChain, IGunUserInstance, IGunOnEvent } from "gun";
+import { GlobalMetaData, GunRecord } from "./types";
+import Entity from './class/entity';
 
 type Global = GlobalMetaData<typeof globalThis>;
 
 export const getGlobal = function (): Global {
   const global = globalThis as Global;
-  global.gun = null;
-  global.sea = null;
+  global.gun = global.gun ?? null;
+  global.sea = global.sea ?? null;
   return global;
 };
 
@@ -86,4 +87,54 @@ export async function reduceFields(fields, valueFetcher, defaultObject = {}) {
       acc[fieldMap[index.toString()]] = value;
       return acc;
     }, defaultObject);
+  }
+
+export async function getRecord(chain: IGunChain<any>): Promise<GunRecord> {
+   return new Promise((resolve, reject) => {
+            chain.once((record: GunRecord) => {
+                if (record) resolve(record);
+                reject('No record');
+            })
+        });
+}
+
+export async function putRecord(chain: IGunChain<any>, record: GunRecord | null) {
+
+  return new Promise<void>((resolve, reject) => {
+                chain.put(record, (ack) => {
+                    if ('err' in ack && ack.err) reject('Internal save failed');
+                    resolve();
+                })
+            });
+}
+
+export function subscribeRecord(chain: IGunChain<any>, callback: (record: GunRecord, subscription: IGunOnEvent) => void): void {
+      chain.on((record: GunRecord, _key, _msg, event) => {
+            callback(record, event);
+      });
+}
+
+export async function isRecordExist(chain: IGunChain<any>) {
+  try { 
+    await getRecord(chain);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function createPublicRoot(namespace: string): Promise<Entity> {
+  const gun = getGun();
+  return new Promise((resolve, reject) => {
+    gun.get(namespace).put({
+      createdAt: Date.now(),
+    }, (ack) => {
+      if ('err' in ack && ack.err) {
+        reject('Cannot create root');
+      }
+      resolve({
+        instance: gun.get(namespace)
+      } as unknown as Entity);
+    })
+  })
 }
