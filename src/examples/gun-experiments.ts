@@ -9,8 +9,8 @@ const kobe = await sea.pair();
 const jordan = await sea.pair();
 const lebron = await sea.pair();
 
-// const policy = {"#": {"*": "inbox"}, ".": {"=": "chat"}};
-const policy = {"#": {"*": "inbox"}, ".": {"=": "message", ".": {"=": "chat"}}};
+const policy = {"#": {"*": "inbox/message"}, ".": {"=": "chat"}};
+// const policy = {"#": {"*": "inbox"}, ".": {"=": "message", ".": {"=": "chat"}}};
 
 const cert = await sea.certify(kobe.pub, policy, jordan, null, { expiry: Date.now() + (60*60*24*1000) });
 
@@ -25,7 +25,7 @@ try {
 
             user.auth(kobe, async () => {
                 const textToMatch = "No, I am the goat";
-                await gun.user(jordan.pub).get('inbox').get('message').get('chat').put(textToMatch, null, { opt: { cert }}).then();
+                await gun.user(jordan.pub).get('inbox/message').get('chat').put(textToMatch, null, { opt: { cert }}).then();
                 const node = await gun.user(jordan.pub).get('inbox').get('message').get('chat').then();
                 console.log(node);
                 if (textToMatch !== node) throw new Error("Couldn't write");
