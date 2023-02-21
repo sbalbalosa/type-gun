@@ -1,27 +1,29 @@
 import { IGunChain, IGunOnEvent } from 'gun';
-import { targetConstructorToSchema } from 'class-validator-jsonschema';
-import Ajv, { ErrorObject } from "ajv";
 
 import { createFieldRawData, hydrateInstance, createEmptyData } from '../decorators/field';
 import { GunRecord, PlainObject} from '../types';
 import { getRecord, putRecord, subscribeRecord, isRecordExist } from '../helpers';
-
-const ajv = new Ajv();
+import Validation from './validation';
 
 export default class Entity {
     #parent: Entity;
     #id: string;
+    #validation: Validation;
     #subscription?: IGunOnEvent;
-    validationSchema: ReturnType<typeof targetConstructorToSchema> = {};
-    validateSchema: ReturnType<typeof ajv.compile>;
-    
 
-    constructor(parent: Entity, name?: string) {
-        this.#id = name ?? this.constructor.name;
-        this.#parent = parent;
+    constructor(config: {
+        parent: Entity,
+        validation?: Validation
+        name?: string
+    }) {
+        this.#id = config.name ?? this.constructor.name;
+        this.#parent = config.parent;
 
-        this.validationSchema = targetConstructorToSchema(this.constructor);
-        this.validateSchema = ajv.compile(this.validationSchema);
+        this.#validation = config.validation ?? new Validation(this.constructor);
+    }
+
+    get schema() {
+        return this.#validation.schema
     }
 
     get instance(): IGunChain<any> {
@@ -35,27 +37,11 @@ export default class Entity {
         return createFieldRawData(this as unknown as GunRecord, this.constructor);
     }
 
-    get propertiesFromValidation(): string[] {
-        return Object.keys(this.validationSchema.properties ?? {});
-    }
-
-    get valuesFromValidation(): PlainObject {
-        return this.propertiesFromValidation.reduce((result, key) => {
-            return {
-                ...result,
-                [key]: (this as PlainObject)[key]
-            };
-        }, {} as PlainObject);
-    }
-    get errors(): ErrorObject[] {
-        return this.#validatePlainObject(this.valuesFromValidation);
-    }
-
     async hydrate() {
         try {
             const validRecord: GunRecord = {};
             const record = await getRecord(this.instance);
-            const errors = this.#validatePlainObject(record).reduce((result, error) => {
+            const errors = this.#validation.validatePlainObject(record).reduce((result, error) => {
                 return {
                     ...result,
                     [error.instancePath.substring(1)]: true
@@ -75,7 +61,7 @@ export default class Entity {
     }
 
     async save(): Promise<boolean> {
-        if (this.errors.length === 0) {
+        if (this.#validation.errors.length === 0) {
             await putRecord(this.instance, this.raw);
             return true;
         }
@@ -114,11 +100,5 @@ export default class Entity {
         }
         
         throw new Error('No subscription');
-    }
-
-    #validatePlainObject(data: PlainObject): ErrorObject[] {
-        const valid = this.validateSchema(data);
-        if (valid) return [];
-        return this.validateSchema.errors ?? [];
     }
 }

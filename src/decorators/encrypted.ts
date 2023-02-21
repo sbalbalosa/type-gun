@@ -1,5 +1,5 @@
 import { reduceFields } from "../helpers";
-import type { NodeRecord } from "../types";
+import type { GunRecord } from "../types";
 
 export const encryptedFieldMetadataKey = Symbol("encrypted");
 
@@ -7,7 +7,7 @@ export function getEncrypteds(constructor: Function): string[] {
   return Reflect.getMetadata(encryptedFieldMetadataKey, constructor) ?? [];
 }
 
-export async function createEncryptedData(raw: NodeRecord, instance: NodeRecord, constructor: Function) {
+export async function createEncryptedData(raw: GunRecord, instance: GunRecord, constructor: Function) {
   if (!instance?.hasKeychain) return raw;
   const fields = getEncrypteds(constructor);
   if (fields.length === 0) return raw;
@@ -16,7 +16,7 @@ export async function createEncryptedData(raw: NodeRecord, instance: NodeRecord,
   }, {...raw});
 }
 
-export async function createDecryptedData(raw: NodeRecord, instance, constructor: Function) {
+export async function createDecryptedData(raw: GunRecord, instance, constructor: Function) {
   if (!instance?.hasKeychain) return raw;
   const fields = getEncrypteds(constructor);
   if (fields.length === 0) return raw;
